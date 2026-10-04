@@ -182,6 +182,24 @@ tr:hover td{background:rgba(34,211,238,.04)}
 footer{margin:30px 0 10px;text-align:center;font-size:10px;color:#3f5b7d;letter-spacing:2px}
 /* hamburger */
 #burger{display:none}
+/* login */
+#loginOverlay{position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 28%,#0a1a33,#050a14 72%);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{width:370px;max-width:100%;background:linear-gradient(145deg,#0b1626,#0e1c33);border:1px solid var(--line);border-radius:14px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.65)}
+.login-card label{font-size:9px;letter-spacing:2px;color:var(--dim);display:block;margin:13px 0 5px}
+.login-card input{width:100%}
+.login-sub{text-align:center;font-size:9px;letter-spacing:3px;color:var(--dim);margin:10px 0 4px}
+#loginErr{color:#fca5a5;font-size:11px;min-height:16px;margin-top:9px;text-align:center}
+.login-hint{margin-top:14px;font-size:10px;color:var(--dim);text-align:center}
+.login-hint b{color:#7dd3fc;font-family:Consolas,monospace}
+.login-foot{margin-top:12px;font-size:8.5px;color:#3f5b7d;text-align:center;letter-spacing:1px;line-height:1.6}
+/* toggles & settings */
+.tgl{position:relative;width:38px;height:20px;background:#060d1a;border:1px solid var(--line);border-radius:20px;cursor:pointer;transition:.2s;flex:none}
+.tgl i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#3f5b7d;transition:.2s}
+.tgl.on{border-color:var(--green)}.tgl.on i{left:20px;background:var(--green);box-shadow:0 0 8px var(--green)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(22,48,79,.4);font-size:12px}
+.set-row .d{font-size:10px;color:var(--dim);margin-top:2px}
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(90px);background:rgba(8,17,32,.97);border:1px solid var(--cyan);color:#7dd3fc;padding:11px 24px;border-radius:8px;font-size:12px;letter-spacing:1px;z-index:1200;transition:.3s;opacity:0;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#toast.show{transform:translateX(-50%);opacity:1}
 /* responsive */
 @media(max-width:1100px){.kpi-grid,.mod-grid,.sig-grid{grid-template-columns:repeat(2,1fr)}.opt-grid{grid-template-columns:repeat(3,1fr)}.health-grid{grid-template-columns:repeat(2,1fr)}.ident,.two-col,.three-col{grid-template-columns:1fr}.hdr-svc{display:none}}
 @media(max-width:760px){
@@ -192,8 +210,27 @@ footer{margin:30px 0 10px;text-align:center;font-size:10px;color:#3f5b7d;letter-
  .pipe-stage .ps-meta{display:none}
 }
 </style>
+<base target="_blank">
 </head>
 <body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="logo" style="justify-content:center"><div class="orb">◉</div><h1>DARKTRACE</h1></div>
+    <div class="login-sub">SECURE ANALYST CONSOLE · SIH26151</div>
+    <label>USERNAME</label>
+    <input id="loginUser" placeholder="analyst id" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+    <label>PASSWORD</label>
+    <input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="loginErr"></div>
+    <button class="btn primary" style="width:100%;margin-top:14px" onclick="doLogin()">⏻ AUTHENTICATE</button>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="guestLogin()">CONTINUE AS GUEST (VIEW-ONLY)</button>
+    <div class="login-hint">Demo accounts — <b>admin / darktrace123</b> · <b>analyst / trace2026</b></div>
+    <div class="login-foot">JWT · RBAC · AUDIT LOGGED · TLS 1.3 — in-page demo session, nothing leaves your browser</div>
+  </div>
+</div>
+<div id="toast"></div>
 
 <header>
   <button class="icon-btn" id="burger" style="display:none">☰</button>
@@ -205,8 +242,9 @@ footer{margin:30px 0 10px;text-align:center;font-size:10px;color:#3f5b7d;letter-
   <div class="hdr-svc">TOR: <b>READY</b> · OSINT: <b>ONLINE</b><br>GRAPH: <b>ONLINE</b> · AI: <b>ONLINE</b></div>
   <button class="icon-btn" onclick="go('alerts');refreshAlerts()">🔔<span class="n">4</span></button>
   <button class="icon-btn" title="Investigation ID" onclick="go('dossier')">🗂</button>
-  <div class="avatar" title="Analyst">AD</div>
-  <button class="icon-btn" title="Settings" onclick="go('health')">⚙</button>
+  <div class="avatar" id="avatar" title="Analyst">AD</div>
+  <button class="icon-btn" title="Settings" onclick="go('settings')">⚙</button>
+  <button class="icon-btn" title="Logout" onclick="logout()" style="color:#f87171">⏻</button>
 </header>
 
 <aside id="sidebar">
@@ -235,12 +273,15 @@ footer{margin:30px 0 10px;text-align:center;font-size:10px;color:#3f5b7d;letter-
     <a data-p="dossier"><span class="ic">🧾</span>Evidence Center</a>
     <a data-p="dossier"><span class="ic">📑</span>Dossier Builder</a>
     <a data-p="health"><span class="ic">♥</span>System Health</a>
+    <a data-p="scan"><span class="ic">🧅</span>Dark Web Connection Scanner</a>
+    <a data-p="scan"><span class="ic">📶</span>Connectivity Scanning</a>
+    <a data-p="settings"><span class="ic">⚙</span>Settings</a>
   </nav>
   <div class="side-label">ACCOUNT</div>
   <nav>
-    <a><span class="ic">⚙</span>Settings</a>
-    <a><span class="ic">👤</span>Profile</a>
-    <a style="color:#f87171"><span class="ic">⏻</span>Logout</a>
+    <a onclick="go('settings')"><span class="ic">⚙</span>Settings</a>
+    <a onclick="go('settings')"><span class="ic">👤</span>Profile</a>
+    <a style="color:#f87171" onclick="logout()"><span class="ic">⏻</span>Logout</a>
   </nav>
   <div class="sys-box"><div class="lbl">SYSTEM STATUS <span class="live">LIVE</span></div><div style="font-size:10px;color:var(--dim);margin-top:5px">Neo4j · FastAPI · Kafka · GNN</div></div>
 </aside>
@@ -575,6 +616,92 @@ footer{margin:30px 0 10px;text-align:center;font-size:10px;color:#3f5b7d;letter-
   </div>
 </div>
 
+<!-- ================= DARK WEB CONNECTION SCANNER ================= -->
+<div class="page" id="p-scan">
+  <div class="card">
+    <h3>🧅 DARK WEB CONNECTION SCANNER</h3>
+    <div class="sub">Connectivity & metadata scanning of dark-web services through the Tor proxy — latency, HTTP status, onion protocol version, circuit ID</div>
+    <div class="search-row">
+      <input id="scanInput" placeholder="demo-*.onion target, or batch (comma separated)" value="demo-market-01.onion, demo-forum-02.onion, demo-leak-03.onion, demo-chan-04.onion" style="flex:1;min-width:280px">
+      <button class="btn primary" onclick="runScan()">▶ START SCAN</button>
+      <button class="btn" onclick="clearScan()">CLEAR</button>
+      <button class="btn ghost" onclick="exportScan()">⬇ EXPORT CSV</button>
+    </div>
+    <div class="three-col" style="margin-top:16px;font-size:12px">
+      <div>Targets scanned<br><b style="font-size:22px;color:var(--cyan)" id="scTotal">0</b></div>
+      <div>Reachable<br><b style="font-size:22px;color:var(--green)" id="scOnline">0</b></div>
+      <div>Offline / timeout<br><b style="font-size:22px;color:var(--red)" id="scOffline">0</b></div>
+    </div>
+    <div class="bar-row" style="margin-top:12px"><span class="bl">Scan progress</span><div class="bt"><i id="scanProg" style="width:0%"></i></div><span class="bv" id="scanPct">0%</span></div>
+    <div class="term" id="scanTerm" style="margin-top:14px;height:210px"><div class="t-info">[READY] Scanner idle — Tor proxy 127.0.0.1:9050 (simulated)<span class="cur"></span></div></div>
+    <div class="warn-strip">⚖ Demo-mode guard: only synthetic <span class="mono">demo-*.onion</span> targets are accepted — real dark-web addresses are blocked. Scanning third-party systems without explicit authorization is prohibited. Connectivity metadata ≠ attribution.</div>
+  </div>
+  <div class="card">
+    <h3>📋 SCAN RESULTS</h3><div class="sub">Per-target connectivity evidence — appended live during scan</div>
+    <div class="tbl-wrap"><table>
+      <tr><th>TARGET</th><th>STATUS</th><th>LATENCY</th><th>ONION</th><th>CIRCUIT</th><th>HTTP</th><th>PUBLIC TITLE</th><th>FIRST SEEN</th><th>LAST SEEN</th></tr>
+      <tbody id="scanBody"><tr><td colspan="9" style="color:var(--dim)">No targets scanned yet</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ================= SETTINGS ================= -->
+<div class="page" id="p-settings">
+  <div class="two-col">
+    <div class="card">
+      <h3>👤 PROFILE</h3><div class="sub">Local demo profile — stored in this session only</div>
+      <div class="opt-grid" style="grid-template-columns:1fr 1fr">
+        <input id="setName" placeholder="Display name" value="Analyst Demo">
+        <input id="setEmail" placeholder="Email" value="analyst@darktrace.demo">
+        <input id="setOrg" placeholder="Organization" value="SIH26151 Team">
+        <select id="setRole" style="background:#060d1a;border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px 13px;font-size:12.5px">
+          <option>ADMIN</option><option selected>ANALYST</option><option>RESEARCHER</option><option>VIEWER</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn primary" onclick="saveSettings()">💾 SAVE PROFILE</button>
+        <button class="btn ghost" onclick="toast('Profile photo upload is simulated in demo mode')">UPLOAD AVATAR</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔔 NOTIFICATIONS & PREFERENCES</h3><div class="sub">Toggle to enable — saved on Save</div>
+      <div class="set-row"><div><div>Email alerts</div><div class="d">New critical/high alerts</div></div><div class="tgl on" data-k="email"><i></i></div></div>
+      <div class="set-row"><div><div>Push notifications</div><div class="d">GNN predictions awaiting review</div></div><div class="tgl on" data-k="push"><i></i></div></div>
+      <div class="set-row"><div><div>Weekly digest</div><div class="d">Summary of new indicators</div></div><div class="tgl" data-k="digest"><i></i></div></div>
+      <div class="set-row"><div><div>Compact UI</div><div class="d">Denser tables and cards</div></div><div class="tgl" data-k="compact"><i></i></div></div>
+      <div class="set-row" style="border-bottom:none"><div><div>Animated background</div><div class="d">Grid + binary watermark effects</div></div><div class="tgl on" data-k="anim"><i></i></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🧅 SCANNER DEFAULTS</h3><div class="sub">Used by the Dark Web Connection Scanner</div>
+    <div class="opt-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">THREADS</div><input id="setThreads" type="number" value="4" min="1" max="16"></div>
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">TIMEOUT (S)</div><input id="setTimeout" type="number" value="8" min="1" max="60"></div>
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">RETRIES</div><input id="setRetries" type="number" value="2" min="0" max="5"></div>
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">TOR PROXY</div><input id="setProxy" value="127.0.0.1:9050"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn primary" onclick="saveSettings()">💾 SAVE DEFAULTS</button>
+      <button class="btn ghost" onclick="resetDefaults()">RESET TO DEFAULTS</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🔐 SESSION & SECURITY</h3><div class="sub">JWT · RBAC · audit logged · encrypted storage</div>
+    <div class="tbl-wrap"><table>
+      <tr><th>SESSION</th><th>VALUE</th></tr>
+      <tr><td>Current user</td><td class="mono" id="sessUser">—</td></tr>
+      <tr><td>Role</td><td class="mono" id="sessRole">—</td></tr>
+      <tr><td>Session ID</td><td class="mono" id="sessId">—</td></tr>
+      <tr><td>Started</td><td class="mono" id="sessStart">—</td></tr>
+    </table></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn danger" onclick="logout()">⏻ LOGOUT</button>
+      <button class="btn ghost" onclick="toast('All other sessions revoked (simulated)')">REVOKE OTHER SESSIONS</button>
+      <button class="btn ghost" onclick="toast('Password change is simulated in demo mode')">CHANGE PASSWORD</button>
+    </div>
+  </div>
+</div>
+
 <footer>DARKTRACE v2.0 · SIH26151 · EVIDENCE-CENTRIC AI · DEMO / SYNTHETIC / PUBLIC OSINT / AUTHORIZED ANALYSIS ONLY</footer>
 </main>
 
@@ -625,7 +752,7 @@ const mods=[
 document.getElementById('mods').innerHTML=mods.map(m=>
  `<div class="mod"><div class="m-ic">${m[0]}</div><span class="m-tag" style="--mc:var(${m[4]})">${m[5]}</span><h4>${m[1]}</h4><p>${m[2]}</p>
   <div style="margin-top:8px"><span class="st ${m[3]==='ONLINE'?'ONLINE':'WARNING'}" style="font-size:8px">${m[3]}</span></div>
-  <a onclick="go('${['g','graph','investigate','dossier','dashboard','timeline','investigate','investigate','recon','dossier','recon','recon','recon','graph','identity','dossier'][mods.indexOf(m)]||'investigate'}')">Launch Module →</a></div>`).join('');
+  <a onclick="go('${['scan','graph','investigate','dossier','dashboard','timeline','investigate','investigate','recon','dossier','recon','recon','recon','graph','identity','dossier'][mods.indexOf(m)]||'investigate'}')">Launch Module →</a></div>`).join('');
 
 /* ---------- SIGNALS ---------- */
 const sigs=[
@@ -812,6 +939,135 @@ function showNode(i){
   svg.addEventListener('wheel',e=>{e.preventDefault();if(!gview)return;const f=e.deltaY<0?1.1:0.9;gview.s=Math.min(2.5,Math.max(.4,gview.s*f));drawGraph();},{passive:false});
   addEventListener('resize',()=>{if(document.getElementById('p-graph').classList.contains('on'))drawGraph();});
 })();
+/* ---------- LOGIN / SESSION ---------- */
+const ACCOUNTS={admin:{pass:'darktrace123',role:'ADMIN',name:'Admin'},analyst:{pass:'trace2026',role:'ANALYST',name:'Analyst'}};
+let session=null;
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginErr');
+  if(!u||!p){err.textContent='⚠ Username and password are required';return;}
+  const acc=ACCOUNTS[u.toLowerCase()];
+  if(acc&&acc.pass!==p){err.textContent='⚠ Invalid credentials — attempt logged';return;}
+  err.textContent='';
+  startSession(u,acc?acc.role:'VIEWER',acc?acc.name:u);
+}
+function guestLogin(){startSession('guest','VIEWER','Guest');}
+function startSession(u,role,name){
+  session={user:u,role,name,start:new Date()};
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('avatar').textContent=(name||'A').slice(0,2).toUpperCase();
+  document.getElementById('sessUser').textContent=u;
+  document.getElementById('sessRole').textContent=role;
+  document.getElementById('sessId').textContent='SES-'+Math.random().toString(16).slice(2,10).toUpperCase();
+  document.getElementById('sessStart').textContent=session.start.toISOString();
+  addTerm('t-info',`[AUTH] Session started → ${u} (${role}) · audit logged`);
+  toast(`Welcome, ${name} — ${role} session started`);
+}
+function logout(){
+  if(session)addTerm('t-warn',`[AUTH] Session ended → ${session.user} · audit logged`);
+  session=null;
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginErr').textContent='';
+}
+
+/* ---------- TOAST / SETTINGS ---------- */
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400);
+}
+document.querySelectorAll('.tgl').forEach(t=>t.onclick=()=>{t.classList.toggle('on');});
+function saveSettings(){
+  const n=document.getElementById('setName').value.trim();
+  if(n)document.getElementById('avatar').textContent=n.slice(0,2).toUpperCase();
+  toast('Settings saved (session demo)');
+}
+function resetDefaults(){
+  document.getElementById('setThreads').value=4;
+  document.getElementById('setTimeout').value=8;
+  document.getElementById('setRetries').value=2;
+  document.getElementById('setProxy').value='127.0.0.1:9050';
+  toast('Scanner defaults restored');
+}
+
+/* ---------- DARK WEB CONNECTION SCANNER ---------- */
+let scanResults=[];
+function scanLog(cls,txt){
+  const t=document.getElementById('scanTerm');
+  t.querySelector('.cur')?.remove();
+  const d=document.createElement('div');d.className=cls;d.textContent=txt;
+  const c=document.createElement('span');c.className='cur';d.appendChild(c);
+  t.appendChild(d);t.scrollTop=t.scrollHeight;
+}
+function runScan(){
+  const raw=document.getElementById('scanInput').value.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);
+  const t=document.getElementById('scanTerm');t.innerHTML='';
+  scanResults=[];
+  document.getElementById('scanBody').innerHTML='';
+  document.getElementById('scanProg').style.width='0%';
+  document.getElementById('scanPct').textContent='0%';
+  const targets=[];
+  raw.forEach(h=>{
+    if(!/\.onion$/i.test(h)){scanLog('t-warn',`[BLOCKED] ${h} — not an .onion address (demo guard)`);return;}
+    if(!/^demo-/i.test(h)){scanLog('t-warn',`[BLOCKED] ${h} — real dark-web targets are blocked in demo mode`);return;}
+    if(targets.includes(h))return;
+    targets.push(h);
+  });
+  if(!targets.length){scanLog('t-warn','[ABORT] No permitted targets — use synthetic demo-*.onion addresses');updateScanStats();return;}
+  const threads=Math.max(1,Math.min(16,+document.getElementById('setThreads').value||4));
+  const timeout=Math.max(1,+document.getElementById('setTimeout').value||8);
+  const proxy=document.getElementById('setProxy').value||'127.0.0.1:9050';
+  scanLog('t-info',`[INFO] Dark-web connection scan started → ${targets.length} target(s) · ${threads} thread(s) · timeout ${timeout}s · proxy ${proxy} (simulated)`);
+  let done=0;
+  targets.forEach((h,i)=>{
+    setTimeout(()=>{
+      const latency=150+Math.floor(Math.random()*timeout*100);
+      const online=Math.random()>0.28;
+      const circuit='CB'+Math.random().toString(16).slice(2,8).toUpperCase();
+      const http=online?(Math.random()>0.25?'200':'301'):'—';
+      const title=online?'"'+h.replace(/^demo-/i,'').replace(/\.onion$/i,'').replace(/-/g,' ').toUpperCase().trim()+' Portal"':'—';
+      const first='2024-0'+(1+i%9)+'-1'+(i%9);
+      const last=online?'2026-10-04':'2026-08-1'+(i%9);
+      const r={h,online,latency,ver:'v3',circuit,http,title,first,last};
+      scanResults.push(r);
+      scanLog(online?'t-ok':'t-warn',online?`[ONLINE] ${h} — ${latency}ms · HTTP ${http} · circuit ${circuit}`:`[TIMEOUT] ${h} — no response after ${timeout}s · circuit ${circuit}`);
+      const b=document.getElementById('scanBody');
+      if(done===0)b.innerHTML='';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="mono">${r.h}</td><td><span class="st ${online?'ONLINE':'OFFLINE'}">${online?'ONLINE':'TIMEOUT'}</span></td><td class="mono">${online?r.latency+'ms':'—'}</td><td class="mono">${r.ver}</td><td class="mono">${r.circuit}</td><td class="mono">${r.http}</td><td class="mono">${r.title}</td><td class="mono">${r.first}</td><td class="mono">${r.last}</td>`;
+      b.appendChild(tr);
+      done++;
+      const pct=Math.round(done/targets.length*100);
+      document.getElementById('scanProg').style.width=pct+'%';
+      document.getElementById('scanPct').textContent=pct+'%';
+      updateScanStats();
+      if(done===targets.length)scanLog('t-ai','[AI] Scan complete — connectivity evidence appended to evidence chain (EV-0'+(120+scanResults.length)+' …) · analyst review recommended');
+    },500+i*750);
+  });
+}
+function updateScanStats(){
+  document.getElementById('scTotal').textContent=scanResults.length;
+  document.getElementById('scOnline').textContent=scanResults.filter(r=>r.online).length;
+  document.getElementById('scOffline').textContent=scanResults.filter(r=>!r.online).length;
+}
+function clearScan(){
+  scanResults=[];
+  document.getElementById('scanBody').innerHTML='<tr><td colspan="9" style="color:var(--dim)">No targets scanned yet</td></tr>';
+  document.getElementById('scanTerm').innerHTML='<div class="t-info">[READY] Scanner idle — Tor proxy 127.0.0.1:9050 (simulated)<span class="cur"></span></div>';
+  document.getElementById('scanProg').style.width='0%';
+  document.getElementById('scanPct').textContent='0%';
+  updateScanStats();
+}
+function exportScan(){
+  if(!scanResults.length){toast('No scan results to export');return;}
+  let csv='target,status,latency_ms,onion_version,circuit,http,title,first_seen,last_seen\n';
+  scanResults.forEach(r=>{csv+=[r.h,r.online?'ONLINE':'TIMEOUT',r.online?r.latency:'',r.ver,r.circuit,r.http,'"'+(r.title||'')+'"',r.first,r.last].join(',')+'\n';});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='darktrace_connection_scan.csv';a.click();
+  toast('Scan results exported → CSV');
+}
 </script>
 </body>
 </html>
