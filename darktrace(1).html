@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DARKTRACE — Dark Web Threat Actor Intelligence</title>
+<style>
+:root{
+  --bg:#050a14; --bg2:#081020; --panel:#0b1626; --panel2:#0e1c33;
+  --line:#16304f; --cyan:#22d3ee; --blue:#3b82f6; --green:#34d399;
+  --yellow:#fbbf24; --orange:#fb923c; --red:#ef4444; --purple:#a78bfa;
+  --magenta:#e879f9; --txt:#dbeafe; --dim:#7c9cbf;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Roboto,Arial,sans-serif}
+body{background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(34,211,238,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.04) 1px,transparent 1px);
+  background-size:44px 44px}
+body::after{content:"01100100 01000001 01010010 01001011 01010100 01010010 01000001 01000011 01000101 01101110 00110001 00110000 00110001";position:fixed;right:-40px;top:30%;z-index:0;pointer-events:none;
+  writing-mode:vertical-rl;font-size:10px;letter-spacing:6px;color:rgba(34,211,238,.05)}
+/* ============ HEADER ============ */
+header{position:fixed;top:0;left:0;right:0;height:56px;z-index:100;display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:linear-gradient(90deg,#081226,#0a1a33 60%,#081226);border-bottom:1px solid var(--line);box-shadow:0 2px 18px rgba(0,0,0,.5)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo .orb{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#38bdf8,#1d4ed8);box-shadow:0 0 14px #3b82f6;display:flex;align-items:center;justify-content:center;font-size:14px}
+.logo h1{font-size:17px;letter-spacing:3px;background:linear-gradient(90deg,#67e8f9,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent}
+.badge{font-size:9px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;letter-spacing:1.5px;color:var(--dim)}
+.badge.red{border-color:rgba(239,68,68,.5);color:#fca5a5}
+.badge.blue{border-color:rgba(59,130,246,.5);color:#93c5fd}
+.status-dot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);letter-spacing:1px}
+.status-dot i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.head-spacer{flex:1}
+.hdr-svc{font-size:9px;color:var(--dim);letter-spacing:1px;text-align:right;line-height:1.5}
+.hdr-svc b{color:var(--green)}
+.icon-btn{position:relative;width:34px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--dim);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.icon-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.icon-btn .n{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;min-width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#2563eb);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;border:2px solid var(--line)}
+/* ============ SIDEBAR ============ */
+aside{position:fixed;top:56px;left:0;bottom:0;width:220px;z-index:90;background:linear-gradient(180deg,#081120,#060b16);border-right:1px solid var(--line);overflow-y:auto;padding:10px 0 20px;transition:transform .3s}
+aside::-webkit-scrollbar{width:4px}aside::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+.side-label{font-size:9px;letter-spacing:3px;color:#3f5b7d;padding:10px 18px 6px}
+nav a{display:flex;align-items:center;gap:10px;padding:8px 18px;font-size:12.5px;color:var(--dim);text-decoration:none;border-left:2px solid transparent;transition:.15s;cursor:pointer}
+nav a:hover{color:var(--txt);background:rgba(34,211,238,.05)}
+nav a.active{color:#7dd3fc;background:linear-gradient(90deg,rgba(34,211,238,.14),transparent);border-left-color:var(--cyan)}
+nav a .ic{width:18px;text-align:center}
+.sys-box{margin:14px 14px 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:rgba(52,211,153,.04)}
+.sys-box .lbl{font-size:9px;letter-spacing:2px;color:var(--dim);display:flex;justify-content:space-between}
+.live{display:inline-block;padding:1px 7px;border-radius:3px;background:rgba(52,211,153,.15);color:var(--green);font-size:9px;border:1px solid rgba(52,211,153,.4);animation:pulse 2s infinite}
+/* ============ MAIN ============ */
+main{margin:56px 0 0 220px;padding:20px;position:relative;z-index:1;transition:margin .3s}
+.page{display:none}.page.on{display:block;animation:fadeIn .35s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sec-title{font-size:15px;letter-spacing:2px;color:#93c5fd;margin:22px 0 12px;display:flex;align-items:center;gap:10px}
+.sec-title .tick{width:4px;height:16px;background:var(--cyan);border-radius:2px;box-shadow:0 0 8px var(--cyan)}
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;transition:.25s}
+.kpi:hover{transform:translateY(-3px);border-color:rgba(34,211,238,.4);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--kc,var(--cyan)),transparent);opacity:.7}
+.kpi .val{font-size:26px;font-weight:700;color:var(--kc,var(--cyan))}
+.kpi .lbl{font-size:11px;color:var(--dim);margin-top:2px}
+.kpi .sub{font-size:10px;margin-top:6px;color:var(--green)}
+/* cards */
+.card{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.card h3{font-size:13px;letter-spacing:1.5px;color:#bfdbfe;margin-bottom:4px}
+.card .sub{font-size:11px;color:var(--dim);margin-bottom:14px}
+/* module grid */
+.mod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.mod{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:16px;transition:.25s;position:relative;overflow:hidden}
+.mod:hover{transform:translateY(-4px);border-color:rgba(167,139,250,.45);box-shadow:0 10px 26px rgba(0,0,0,.5)}
+.mod .m-ic{font-size:20px;color:var(--cyan);margin-bottom:10px}
+.mod .m-tag{position:absolute;top:12px;right:12px;font-size:8px;letter-spacing:1.5px;padding:2px 7px;border-radius:3px;color:var(--mc,var(--cyan));border:1px solid}
+.mod h4{font-size:12.5px;color:#e0f2fe;margin-bottom:5px}
+.mod p{font-size:10.5px;color:var(--dim);line-height:1.5;min-height:32px}
+.mod a{display:inline-block;margin-top:10px;font-size:10.5px;color:var(--cyan);cursor:pointer;letter-spacing:1px}
+.mod a:hover{text-shadow:0 0 8px var(--cyan)}
+/* investigation */
+.search-row{display:flex;gap:10px;flex-wrap:wrap}
+input,select,textarea{background:#060d1a;border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px 13px;font-size:12.5px;outline:none;transition:.2s}
+input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(34,211,238,.12)}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--txt);padding:10px 18px;border-radius:8px;font-size:12px;letter-spacing:1.5px;cursor:pointer;transition:.2s;font-weight:600}
+.btn:hover{filter:brightness(1.2)}
+.btn.primary{background:linear-gradient(90deg,#0891b2,#2563eb);border-color:transparent;box-shadow:0 0 16px rgba(37,99,235,.35)}
+.btn.primary:hover{box-shadow:0 0 26px rgba(34,211,238,.5)}
+.btn.danger{background:linear-gradient(90deg,#b91c1c,#7f1d1d);border-color:transparent}
+.btn.ghost{background:transparent}
+.opt-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:12px}
+.opt-grid input{width:100%;font-size:11px;padding:8px 10px}
+/* pipeline */
+.pipe{display:flex;flex-direction:column;gap:0}
+.pipe-stage{display:flex;align-items:center;gap:14px;padding:9px 14px;border-left:2px solid var(--line);position:relative;transition:.3s}
+.pipe-stage .ps-ic{width:26px;height:26px;border-radius:6px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim);background:#060d1a;flex:none}
+.pipe-stage .ps-name{font-size:12px;width:210px;color:var(--dim)}
+.pipe-stage .ps-bar{flex:1;height:5px;background:#060d1a;border-radius:3px;overflow:hidden}
+.pipe-stage .ps-bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:3px;transition:width .4s}
+.pipe-stage .ps-meta{font-size:9.5px;color:var(--dim);width:230px;text-align:right}
+.pipe-stage.active{border-left-color:var(--cyan);background:rgba(34,211,238,.05)}
+.pipe-stage.active .ps-name{color:#7dd3fc}
+.pipe-stage.done .ps-ic{border-color:var(--green);color:var(--green);box-shadow:0 0 8px rgba(52,211,153,.4)}
+.pipe-stage.done .ps-bar i{background:var(--green)}
+/* identity */
+.ident{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ev-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid rgba(52,211,153,.35);color:var(--green);background:rgba(52,211,153,.06);margin:3px}
+.conf-big{font-size:52px;font-weight:800;background:linear-gradient(180deg,#a5f3fc,#3b82f6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.warn-strip{border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.07);border-radius:8px;padding:10px 14px;font-size:11.5px;color:#fde68a;margin-top:12px}
+.never-strip{border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.07);border-radius:8px;padding:12px 14px;font-size:12px;color:#fecaca;margin-top:12px}
+/* terminal */
+.term{background:#040910;border:1px solid var(--line);border-radius:10px;font-family:"Consolas","Courier New",monospace;font-size:12px;line-height:1.75;padding:16px;height:280px;overflow-y:auto;box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+.term::-webkit-scrollbar{width:5px}.term::-webkit-scrollbar-thumb{background:var(--line)}
+.term .t-ok{color:var(--green)}.term .t-info{color:#7dd3fc}.term .t-ai{color:var(--purple)}.term .t-warn{color:var(--yellow)}
+.term .cur{display:inline-block;width:8px;height:13px;background:var(--cyan);animation:pulse .9s infinite;vertical-align:middle}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;padding:8px 10px;color:#5b7ba0;letter-spacing:1.5px;font-size:9.5px;border-bottom:1px solid var(--line)}
+td{padding:8px 10px;border-bottom:1px solid rgba(22,48,79,.5);color:#cbd5e1}
+tr:hover td{background:rgba(34,211,238,.04)}
+.tbl-wrap{overflow-x:auto}
+.sev{font-size:9px;padding:2px 8px;border-radius:3px;letter-spacing:1px;font-weight:700}
+.sev.LOW{background:rgba(52,211,153,.12);color:var(--green)}
+.sev.MEDIUM{background:rgba(251,191,36,.12);color:var(--yellow)}
+.sev.HIGH{background:rgba(251,146,60,.12);color:var(--orange)}
+.sev.CRITICAL{background:rgba(239,68,68,.15);color:var(--red)}
+/* meter */
+.meter-wrap{display:flex;align-items:center;gap:22px}
+.meter-svg{transform:rotate(-90deg)}
+/* signal cards */
+.sig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.sig{border:1px solid var(--line);border-radius:12px;padding:16px;background:linear-gradient(145deg,var(--panel),var(--panel2));border-top:2px solid var(--sc)}
+.sig .sv{font-size:24px;font-weight:700;color:var(--sc)}
+.sig ul{list-style:none;margin-top:8px}
+.sig li{font-size:10.5px;color:var(--dim);padding:3px 0}
+.sig li::before{content:"▸ ";color:var(--sc)}
+/* graph */
+#graphBox{position:relative;height:520px;background:radial-gradient(circle at 50% 40%,rgba(30,58,95,.25),transparent 70%),#050b16;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#graphSvg{width:100%;height:100%;cursor:grab}
+.node-g{cursor:pointer}
+.node-g circle{transition:.2s}
+.node-g:hover circle{filter:brightness(1.3)}
+.g-label{fill:#9db8d6;font-size:9px;pointer-events:none;text-anchor:middle}
+#nodePanel{position:absolute;top:12px;right:12px;width:250px;background:rgba(8,17,32,.94);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:11px;display:none;backdrop-filter:blur(6px)}
+#nodePanel h4{color:var(--cyan);font-size:12px;margin-bottom:8px;letter-spacing:1px}
+#nodePanel .row{display:flex;justify-content:space-between;padding:3px 0;color:var(--dim)}
+#nodePanel .row b{color:#cbd5e1;font-weight:500}
+.g-tools{position:absolute;top:12px;left:12px;display:flex;gap:6px;flex-wrap:wrap;max-width:60%}
+.g-tools .chip{font-size:9px;padding:4px 9px;border:1px solid var(--line);border-radius:20px;color:var(--dim);cursor:pointer;background:rgba(8,17,32,.85);letter-spacing:1px}
+.g-tools .chip.on{border-color:var(--cyan);color:var(--cyan)}
+/* timeline */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:linear-gradient(180deg,var(--cyan),var(--purple))}
+.tl-item{position:relative;padding:10px 0 10px 14px}
+.tl-item::before{content:"";position:absolute;left:-22px;top:16px;width:9px;height:9px;border-radius:50%;background:var(--tc,var(--cyan));box-shadow:0 0 9px var(--tc,var(--cyan))}
+.tl-item .yr{font-size:10px;color:var(--tc,var(--cyan));letter-spacing:2px}
+.tl-item .ev{font-size:12.5px;color:#e2e8f0;margin-top:2px}
+/* alerts */
+.alert-item{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:var(--panel);transition:.2s}
+.alert-item:hover{border-color:rgba(34,211,238,.35)}
+.alert-item .a-ic{font-size:15px;margin-top:1px}
+.alert-item .a-title{font-size:12px;color:#e0f2fe}
+.alert-item .a-meta{font-size:10px;color:var(--dim);margin-top:3px}
+/* health */
+.health-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.h-svc{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--panel);display:flex;justify-content:space-between;align-items:center}
+.h-svc .nm{font-size:11.5px}
+.st{font-size:9px;padding:2px 9px;border-radius:3px;letter-spacing:1px;font-weight:700}
+.st.ONLINE{background:rgba(52,211,153,.12);color:var(--green)}
+.st.WARNING{background:rgba(251,191,36,.12);color:var(--yellow)}
+.st.OFFLINE{background:rgba(239,68,68,.15);color:var(--red)}
+/* misc */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.pill{display:inline-block;font-size:9px;letter-spacing:2px;padding:3px 10px;border-radius:4px;border:1px solid}
+.pill.demo{border-color:rgba(232,121,249,.5);color:var(--magenta)}
+.pill.pub{border-color:rgba(34,211,238,.5);color:var(--cyan)}
+.bar-row{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:11px}
+.bar-row .bl{width:130px;color:var(--dim)}
+.bar-row .bt{flex:1;height:7px;background:#060d1a;border-radius:4px;overflow:hidden}
+.bar-row .bt i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+.bar-row .bv{width:42px;text-align:right;color:#93c5fd}
+.mono{font-family:Consolas,monospace;font-size:11px;color:#67e8f9}
+footer{margin:30px 0 10px;text-align:center;font-size:10px;color:#3f5b7d;letter-spacing:2px}
+/* hamburger */
+#burger{display:none}
+/* login */
+#loginOverlay{position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 28%,#0a1a33,#050a14 72%);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{width:370px;max-width:100%;background:linear-gradient(145deg,#0b1626,#0e1c33);border:1px solid var(--line);border-radius:14px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.65)}
+.login-card label{font-size:9px;letter-spacing:2px;color:var(--dim);display:block;margin:13px 0 5px}
+.login-card input{width:100%}
+.login-sub{text-align:center;font-size:9px;letter-spacing:3px;color:var(--dim);margin:10px 0 4px}
+#loginErr{color:#fca5a5;font-size:11px;min-height:16px;margin-top:9px;text-align:center}
+.login-hint{margin-top:14px;font-size:10px;color:var(--dim);text-align:center}
+.login-hint b{color:#7dd3fc;font-family:Consolas,monospace}
+.login-foot{margin-top:12px;font-size:8.5px;color:#3f5b7d;text-align:center;letter-spacing:1px;line-height:1.6}
+/* toggles & settings */
+.tgl{position:relative;width:38px;height:20px;background:#060d1a;border:1px solid var(--line);border-radius:20px;cursor:pointer;transition:.2s;flex:none}
+.tgl i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#3f5b7d;transition:.2s}
+.tgl.on{border-color:var(--green)}.tgl.on i{left:20px;background:var(--green);box-shadow:0 0 8px var(--green)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(22,48,79,.4);font-size:12px}
+.set-row .d{font-size:10px;color:var(--dim);margin-top:2px}
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(90px);background:rgba(8,17,32,.97);border:1px solid var(--cyan);color:#7dd3fc;padding:11px 24px;border-radius:8px;font-size:12px;letter-spacing:1px;z-index:1200;transition:.3s;opacity:0;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#toast.show{transform:translateX(-50%);opacity:1}
+/* responsive */
+@media(max-width:1100px){.kpi-grid,.mod-grid,.sig-grid{grid-template-columns:repeat(2,1fr)}.opt-grid{grid-template-columns:repeat(3,1fr)}.health-grid{grid-template-columns:repeat(2,1fr)}.ident,.two-col,.three-col{grid-template-columns:1fr}.hdr-svc{display:none}}
+@media(max-width:760px){
+ aside{transform:translateX(-100%)} aside.open{transform:none}
+ main{margin-left:0}
+ #burger{display:flex}
+ .kpi-grid,.mod-grid,.sig-grid,.opt-grid,.health-grid{grid-template-columns:1fr}
+ .pipe-stage .ps-meta{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="logo" style="justify-content:center"><div class="orb">◉</div><h1>DARKTRACE</h1></div>
+    <div class="login-sub">SECURE ANALYST CONSOLE · SIH26151</div>
+    <label>USERNAME</label>
+    <input id="loginUser" placeholder="analyst id" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+    <label>PASSWORD</label>
+    <input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="loginErr"></div>
+    <button class="btn primary" style="width:100%;margin-top:14px" onclick="doLogin()">⏻ AUTHENTICATE</button>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="guestLogin()">CONTINUE AS GUEST (VIEW-ONLY)</button>
+    <div class="login-hint">Demo accounts — <b>admin / darktrace123</b> · <b>analyst / trace2026</b></div>
+    <div class="login-foot">JWT · RBAC · AUDIT LOGGED · TLS 1.3 — in-page demo session, nothing leaves your browser</div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<header>
+  <button class="icon-btn" id="burger" style="display:none">☰</button>
+  <div class="logo"><div class="orb">◉</div><h1>DARKTRACE</h1></div>
+  <span class="badge red">SIH26151</span>
+  <span class="badge blue">BLOCKCHAIN & CYBERSECURITY</span>
+  <div class="status-dot"><i></i>SYSTEM ONLINE</div>
+  <div class="head-spacer"></div>
+  <div class="hdr-svc">TOR: <b>READY</b> · OSINT: <b>ONLINE</b><br>GRAPH: <b>ONLINE</b> · AI: <b>ONLINE</b></div>
+  <button class="icon-btn" onclick="go('alerts');refreshAlerts()">🔔<span class="n">4</span></button>
+  <button class="icon-btn" title="Investigation ID" onclick="go('dossier')">🗂</button>
+  <div class="avatar" id="avatar" title="Analyst">AD</div>
+  <button class="icon-btn" title="Settings" onclick="go('settings')">⚙</button>
+  <button class="icon-btn" title="Logout" onclick="logout()" style="color:#f87171">⏻</button>
+</header>
+
+<aside id="sidebar">
+  <div class="side-label">NAVIGATION</div>
+  <nav id="nav">
+    <a data-p="dashboard" class="active"><span class="ic">▦</span>Dashboard</a>
+    <a data-p="dashboard"><span class="ic">⌂</span>Home</a>
+    <a data-p="investigate"><span class="ic">◎</span>New Investigation</a>
+    <a data-p="investigate"><span class="ic">🕵</span>Actor Intelligence</a>
+    <a data-p="tor"><span class="ic">🧅</span>Dark Web Intelligence</a>
+    <a data-p="tor"><span class="ic">⟳</span>TOR Intelligence</a>
+    <a data-p="osint"><span class="ic">🛰</span>OSINT Collection</a>
+    <a data-p="recon"><span class="ic">⌖</span>Reconnaissance</a>
+    <a data-p="recon"><span class="ic">🖐</span>Technical Fingerprinting</a>
+    <a data-p="investigate"><span class="ic">🔑</span>PGP Intelligence</a>
+    <a data-p="investigate"><span class="ic">₿</span>Crypto Intelligence</a>
+    <a data-p="investigate"><span class="ic">✒</span>Stylometry</a>
+    <a data-p="recon"><span class="ic">🏗</span>Infrastructure Analysis</a>
+    <a data-p="recon"><span class="ic">🔌</span>Port Intelligence</a>
+    <a data-p="osint"><span class="ic">📡</span>Traffic Intelligence</a>
+    <a data-p="graph"><span class="ic">⬡</span>Relationship Graph</a>
+    <a data-p="graph"><span class="ic">🧠</span>AI / GNN Engine</a>
+    <a data-p="identity"><span class="ic">⚭</span>Identity Linkage</a>
+    <a data-p="timeline"><span class="ic">🕐</span>Timeline Analysis</a>
+    <a data-p="alerts"><span class="ic">⚠</span>Alerts</a>
+    <a data-p="dossier"><span class="ic">🧾</span>Evidence Center</a>
+    <a data-p="dossier"><span class="ic">📑</span>Dossier Builder</a>
+    <a data-p="health"><span class="ic">♥</span>System Health</a>
+    <a data-p="scan"><span class="ic">🧅</span>Dark Web Connection Scanner</a>
+    <a data-p="scan"><span class="ic">📶</span>Connectivity Scanning</a>
+    <a data-p="settings"><span class="ic">⚙</span>Settings</a>
+  </nav>
+  <div class="side-label">ACCOUNT</div>
+  <nav>
+    <a onclick="go('settings')"><span class="ic">⚙</span>Settings</a>
+    <a onclick="go('settings')"><span class="ic">👤</span>Profile</a>
+    <a style="color:#f87171" onclick="logout()"><span class="ic">⏻</span>Logout</a>
+  </nav>
+  <div class="sys-box"><div class="lbl">SYSTEM STATUS <span class="live">LIVE</span></div><div style="font-size:10px;color:var(--dim);margin-top:5px">Neo4j · FastAPI · Kafka · GNN</div></div>
+</aside>
+
+<main>
+<!-- ================= DASHBOARD ================= -->
+<div class="page on" id="p-dashboard">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <h2 style="font-size:18px;letter-spacing:2px;color:#bfdbfe">SOC COMMAND DASHBOARD</h2>
+    <span class="pill demo">DEMO DATA</span><span class="pill pub">SYNTHETIC</span>
+    <span style="flex:1"></span>
+    <input placeholder="🔍 Global search: actor, PGP, wallet, domain, case…" style="width:320px" onkeydown="if(event.key==='Enter')go('investigate')">
+  </div>
+  <div class="kpi-grid" id="kpis"></div>
+
+  <h2 class="sec-title"><span class="tick"></span>DARKTRACE INTELLIGENCE SUITE — CAPABILITY HUB (16 MODULES)</h2>
+  <div style="text-align:right;margin:-8px 0 10px"><span class="pill demo">100% SIH26151 COMPLIANT</span></div>
+  <div class="mod-grid" id="mods"></div>
+
+  <div class="two-col" style="margin-top:6px">
+    <div class="card">
+      <h3>🛰 SIGNAL CORRELATION</h3><div class="sub">Four-signal analytical fusion — synthetic demo</div>
+      <div id="dashSignals"></div>
+    </div>
+    <div class="card">
+      <h3>⚠ RECENT ALERTS</h3><div class="sub">Latest threat intelligence events</div>
+      <div id="dashAlerts"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= INVESTIGATE ================= -->
+<div class="page" id="p-investigate">
+  <div class="card">
+    <h3 style="font-size:16px">◎ THREAT ACTOR INVESTIGATION</h3>
+    <div class="sub">Enter a username, alias, handle or publicly observable actor identifier.</div>
+    <div class="search-row">
+      <input id="actorInput" placeholder="ENTER ACTOR NAME / USERNAME / ALIAS" value="DarkFox" style="flex:1;min-width:240px;font-size:14px;padding:12px">
+      <button class="btn primary" onclick="runAnalysis()">▶ ANALYZE ACTOR</button>
+      <button class="btn" onclick="loadDemo()">LOAD DEMO</button>
+      <button class="btn ghost" onclick="clearAnalysis()">CLEAR</button>
+    </div>
+    <div class="opt-grid">
+      <input placeholder="PGP Fingerprint" value="PGP-KEY-X">
+      <input placeholder="Wallet Address" value="DEMO-WALLET-B">
+      <input placeholder="Domain" value="demo-darktrace.example">
+      <input placeholder="IP Indicator" value="203.0.113.10">
+      <input placeholder="Keyword">
+      <input placeholder="Case ID" value="DT-2026-0147">
+    </div>
+    <div class="warn-strip">⚖ ANALYTICAL CORRELATION PLATFORM — Every relationship is an evidence-backed estimate. AI assists; analysts decide. Real-world identity confirmation requires independent authorized evidence.</div>
+  </div>
+
+  <div class="ident">
+    <div class="card" id="identCard" style="display:none">
+      <h3>⚭ IDENTITY-LINKAGE ANALYSIS</h3><div class="sub">Potential identity linkage detected · PENDING ANALYST REVIEW</div>
+      <div class="meter-wrap">
+        <div style="text-align:center"><div class="conf-big">84%</div><div style="font-size:10px;color:var(--dim);letter-spacing:2px">CONFIDENCE</div></div>
+        <div>
+          <div class="bar-row"><span class="bl">Observed Alias</span><span class="mono">DarkFox</span></div>
+          <div class="bar-row"><span class="bl">Potential Aliases</span><span class="mono">d4rk_f0x · FoxShadow · ShadowAdmin</span></div>
+          <div class="bar-row"><span class="bl">Real-World Identity</span><span class="st OFFLINE" style="width:auto">NOT ESTABLISHED</span></div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <span class="ev-chip">✓ PGP relationship</span><span class="ev-chip">✓ Wallet relationship</span><span class="ev-chip">✓ Stylometric similarity</span><span class="ev-chip">✓ Infrastructure relationship</span><span class="ev-chip">✓ Temporal correlation</span>
+      </div>
+      <div class="never-strip">⚠ Potential identity linkage detected. Real-world identity confirmation requires independent authorized evidence and analyst verification. This system never asserts a real person's identity.</div>
+    </div>
+    <div class="card">
+      <h3>🖥 DARKTRACE ANALYSIS ENGINE</h3><div class="sub">Live pipeline telemetry — animated</div>
+      <div class="term" id="term"><div class="t-info">[INIT] DARKTRACE Analysis Engine v2.0 — awaiting actor input<span class="cur"></span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>⟹ ANALYSIS PIPELINE</h3><div class="sub">Collection → Enrichment → Identity Signals → Graph Fusion → GNN Link Prediction → Threat Profile → Analyst Review → Evidence Report</div>
+    <div class="pipe" id="pipe"></div>
+  </div>
+
+  <div class="card">
+    <h3>📊 MULTI-SIGNAL CORRELATION</h3><div class="sub">Four evidence families — weighted fusion</div>
+    <div class="sig-grid" id="sigCards"></div>
+    <div style="margin-top:16px;text-align:center">
+      <div style="font-size:11px;letter-spacing:3px;color:var(--dim)">MULTI-SIGNAL CORRELATION</div>
+      <div style="font-size:42px;font-weight:800;color:var(--purple);text-shadow:0 0 24px rgba(167,139,250,.5)">82%</div>
+      <div style="font-size:10px;color:var(--yellow)">⚠ Confidence indicates analytical agreement among observed signals. It is not proof of real-world identity.</div>
+    </div>
+  </div>
+
+  <div class="card" id="gnnCard">
+    <h3>🧠 GNN LINK PREDICTION ENGINE</h3><div class="sub">Graph neural network — candidate relationship analysis</div>
+    <div class="two-col">
+      <div>
+        <div class="bar-row"><span class="bl">Graph Nodes</span><div class="bt"><i style="width:64%"></i></div><span class="bv">1,284</span></div>
+        <div class="bar-row"><span class="bl">Graph Edges</span><div class="bt"><i style="width:58%"></i></div><span class="bv">3,912</span></div>
+        <div class="bar-row"><span class="bl">Candidate Links</span><div class="bt"><i style="width:22%"></i></div><span class="bv">47</span></div>
+        <div class="bar-row"><span class="bl">Predicted Links</span><div class="bt"><i style="width:14%"></i></div><span class="bv">12</span></div>
+        <div class="bar-row"><span class="bl">Model Confidence</span><div class="bt"><i style="width:86%"></i></div><span class="bv">86%</span></div>
+      </div>
+      <div style="border:1px solid rgba(167,139,250,.4);border-radius:10px;padding:14px;background:rgba(167,139,250,.05)">
+        <div style="font-size:20px;font-weight:700;color:#e9d5ff;text-align:center">DarkFox ↔ d4rk_f0x</div>
+        <div style="text-align:center;font-size:11px;color:var(--purple);margin:6px 0">Potential Relationship: <b>86%</b></div>
+        <div style="font-size:10.5px;color:var(--dim)">Supporting signals: PGP relationship · Wallet overlap · Stylometric similarity · Infrastructure similarity · Temporal correlation</div>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+          <span class="st WARNING">AI PREDICTION</span><span class="st OFFLINE">HUMAN REVIEW REQUIRED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= GRAPH ================= -->
+<div class="page" id="p-graph">
+  <div class="card">
+    <h3>⬡ NEO4J RELATIONSHIP GRAPH</h3>
+    <div class="sub">Interactive investigation graph — click any node for evidence & confidence · zoom / pan / filter</div>
+    <div id="graphBox">
+      <div class="g-tools" id="gTools"></div>
+      <svg id="graphSvg"></svg>
+      <div id="nodePanel"></div>
+    </div>
+    <div style="margin-top:10px;font-size:10px;color:var(--dim)">Legend: <span style="color:var(--cyan)">● Actor</span> · <span style="color:var(--purple)">● PGP Key</span> · <span style="color:var(--yellow)">● Wallet</span> · <span style="color:var(--orange)">● Domain / IP</span> · <span style="color:var(--magenta)">● Forum / Post</span> · <span style="color:var(--green)">● Evidence</span> · <span style="color:#60a5fa">● Technology</span> — <span class="pill demo">SYNTHETIC DEMO DATA</span></div>
+  </div>
+</div>
+
+<!-- ================= IDENTITY ================= -->
+<div class="page" id="p-identity">
+  <div class="card">
+    <h3>⚭ PROBABLE IDENTITY-LINKAGE ANALYSIS</h3><div class="sub">Analytical correlation — never an accusation</div>
+    <div class="three-col">
+      <div><div style="font-size:10px;color:var(--dim);letter-spacing:2px">OBSERVED DARK-WEB IDENTITY</div><div style="font-size:22px;color:var(--cyan);font-weight:700">DarkFox</div></div>
+      <div><div style="font-size:10px;color:var(--dim);letter-spacing:2px">POTENTIAL LINKED IDENTITIES</div><div style="font-size:13px;color:#e2e8f0;margin-top:4px">d4rk_f0x<br>FoxShadow</div></div>
+      <div><div style="font-size:10px;color:var(--dim);letter-spacing:2px">RELATIONSHIP CONFIDENCE</div><div style="font-size:22px;color:var(--purple);font-weight:700">84%</div></div>
+    </div>
+    <div style="margin-top:12px"><span class="ev-chip">PGP</span><span class="ev-chip">Crypto</span><span class="ev-chip">Stylometry</span><span class="ev-chip">Infrastructure</span><span class="ev-chip">Temporal</span></div>
+  </div>
+  <div class="card">
+    <h3>👤 THREAT ACTOR PROFILE</h3><div class="sub">Fictional demo actor — FICTIONAL DEMO DATA</div>
+    <div class="tbl-wrap"><table>
+      <tr><th style="color:#7dd3fc">SECTION</th><th>OBSERVATIONS</th><th>CONFIDENCE</th><th>STATUS</th></tr>
+      <tr><td>IDENTIFIERS</td><td class="mono">DarkFox · d4rk_f0x · FoxShadow · ShadowAdmin</td><td>88%</td><td><span class="st ONLINE">VERIFIED SIGNAL</span></td></tr>
+      <tr><td>PGP KEYS</td><td class="mono">PGP-KEY-X (reuse across 2 aliases)</td><td>87%</td><td><span class="st ONLINE">KEY REUSE</span></td></tr>
+      <tr><td>FINANCIAL</td><td class="mono">DEMO-WALLET-B (BTC) · 3 linked clusters</td><td>74%</td><td><span class="st ONLINE">PUBLIC CHAIN</span></td></tr>
+      <tr><td>BEHAVIOURAL</td><td>Stylometric similarity 82% · AI-assisted text indicator: Possible</td><td>76%</td><td><span class="st WARNING">SUPPORTING</span></td></tr>
+      <tr><td>INFRASTRUCTURE</td><td class="mono">demo-darktrace.example · 203.0.113.10 · Nginx/PHP/OpenSSL</td><td>69%</td><td><span class="st ONLINE">PASSIVE</span></td></tr>
+      <tr><td>GRAPH RELATIONSHIPS</td><td>47 candidate links · 12 predicted · GNN 86%</td><td>86%</td><td><span class="st WARNING">AI PREDICTION</span></td></tr>
+      <tr><td>REAL-WORLD IDENTITY</td><td>—</td><td>—</td><td><span class="st OFFLINE">NOT ESTABLISHED</span></td></tr>
+    </table></div>
+    <div class="never-strip">⚠ Never invent a real person's name. Never automatically expose PII. PGP key reuse, wallet overlap, or stylometric similarity are relationship signals — not automatic proof of one human operator. AI predictions are never final identity determinations.</div>
+  </div>
+</div>
+
+<!-- ================= TIMELINE ================= -->
+<div class="page" id="p-timeline">
+  <div class="card">
+    <h3>🕐 ACTOR ACTIVITY TIMELINE</h3><div class="sub">Synthetic events — DarkFox investigation</div>
+    <div style="margin-bottom:14px">
+      <button class="btn ghost" style="padding:5px 12px;font-size:10px" onclick="filterTl(this,'all')">ALL</button>
+      <button class="btn ghost" style="padding:5px 12px;font-size:10px" onclick="filterTl(this,'pgp')">PGP</button>
+      <button class="btn ghost" style="padding:5px 12px;font-size:10px" onclick="filterTl(this,'crypto')">CRYPTO</button>
+      <button class="btn ghost" style="padding:5px 12px;font-size:10px" onclick="filterTl(this,'infra')">INFRA</button>
+      <button class="btn ghost" style="padding:5px 12px;font-size:10px" onclick="filterTl(this,'ai')">AI</button>
+      <button class="btn ghost" style="padding:5px 12px;font-size:10px" onclick="filterTl(this,'analyst')">ANALYST</button>
+    </div>
+    <div class="tl" id="tl"></div>
+  </div>
+</div>
+
+<!-- ================= ALERTS ================= -->
+<div class="page" id="p-alerts">
+  <div class="card">
+    <h3>⚠ THREAT ALERT CENTER</h3><div class="sub">Every alert carries timestamp, source, evidence, confidence & status</div>
+    <div id="alertList"></div>
+  </div>
+</div>
+
+<!-- ================= TOR / OSINT / RECON ================= -->
+<div class="page" id="p-tor">
+  <div class="two-col">
+    <div class="card">
+      <h3>🧅 TOR INTELLIGENCE CENTER</h3><div class="sub">Simulated connection — no real Tor service configured</div>
+      <div class="bar-row"><span class="bl">Tor Network</span><span class="st ONLINE" id="torSt">CONNECTED</span></div>
+      <div class="bar-row"><span class="bl">SOCKS5 Proxy</span><span class="mono">127.0.0.1:9050</span></div>
+      <div class="bar-row"><span class="bl">Connection</span><span class="st ONLINE">SECURE</span></div>
+      <div class="bar-row"><span class="bl">Session ID</span><span class="mono">TOR-SIM-9F3A21</span></div>
+      <div class="bar-row"><span class="bl">Last Connection</span><span class="mono">2026-10-04 09:12 UTC</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn primary" onclick="torToggle(true)">CONNECT TOR</button>
+        <button class="btn danger" onclick="torToggle(false)">DISCONNECT</button>
+        <button class="btn ghost" onclick="termLine('t-ok','[OK] Tor circuit test passed (simulated) — latency 412ms')">TEST CONNECTION</button>
+      </div>
+      <div class="warn-strip">⚖ Tor usage itself is NEVER classified as evidence of criminal activity. Only public / authorized sources are supported.</div>
+    </div>
+    <div class="card">
+      <h3>🌐 PUBLIC ONION SOURCE ANALYZER</h3><div class="sub">SYNTHETIC DEMONSTRATION — no real addresses</div>
+      <div class="search-row">
+        <input id="onionIn" placeholder="Enter authorized .onion address" value="demo-source-01.onion" style="flex:1">
+        <button class="btn primary" onclick="analyzeOnion()">ANALYZE PUBLIC METADATA</button>
+      </div>
+      <div id="onionOut" style="margin-top:12px;font-size:12px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="p-osint">
+  <div class="card">
+    <h3>🛰 PUBLIC OSINT COLLECTION ENGINE</h3><div class="sub">Public / authorized sources only — synthetic demo run</div>
+    <div class="three-col" style="font-size:12px">
+      <div>Sources scanned<br><b style="font-size:20px;color:var(--cyan)">1,247</b></div>
+      <div>Records collected<br><b style="font-size:20px;color:var(--blue)">18,642</b></div>
+      <div>New indicators<br><b style="font-size:20px;color:var(--green)">342</b></div>
+      <div>Duplicates removed<br><b style="font-size:20px;color:var(--dim)">1,980</b></div>
+      <div>Relevant indicators<br><b style="font-size:20px;color:var(--yellow)">96</b></div>
+      <div>Evidence items<br><b style="font-size:20px;color:var(--purple)">58</b></div>
+    </div>
+    <div class="term" id="term2" style="margin-top:14px;height:220px"><div class="t-info">[READY] OSINT engine idle<span class="cur"></span></div></div>
+    <button class="btn primary" style="margin-top:12px" onclick="runOsint()">▶ RUN COLLECTION</button>
+  </div>
+  <div class="card">
+    <h3>📡 TRAFFIC INTELLIGENCE</h3><div class="sub">Simulated network telemetry — connect an authorized source for live data</div>
+    <canvas id="trafficCv" width="900" height="180" style="width:100%;background:#050b16;border-radius:8px"></canvas>
+    <div class="three-col" style="margin-top:12px;font-size:11.5px;color:var(--dim)">
+      <div>Packets: <b class="mono">2.4M</b> · Flows: <b class="mono">18,402</b></div>
+      <div>DNS queries: <b class="mono">44,120</b> · TLS sessions: <b class="mono">9,318</b></div>
+      <div>Anomalies: <b style="color:var(--orange)">7 flagged</b> · Protocols: TCP/UDP/QUIC</div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="p-recon">
+  <div class="card">
+    <h3>⌖ RECONNAISSANCE & DISCOVERY</h3><div class="sub">Passive / public / authorized reconnaissance only</div>
+    <div class="search-row">
+      <input value="lab.darktrace.local" style="flex:1">
+      <button class="btn primary" onclick="termLine('t-ok','[OK] Passive recon complete: 9 indicators (demo)')">RUN PASSIVE RECON</button>
+    </div>
+    <div class="tbl-wrap" style="margin-top:14px"><table>
+      <tr><th>DOMAIN</th><th>TECHNOLOGY</th><th>CERTIFICATE</th><th>DNS</th><th>HOSTING</th><th>FIRST SEEN</th><th>LAST SEEN</th></tr>
+      <tr><td class="mono">lab.darktrace.local</td><td>Nginx · PHP · OpenSSL</td><td>demo-cert-x1</td><td>ns1.demo</td><td>Demo Hosting</td><td>2024-03-11</td><td>2026-10-04</td></tr>
+      <tr><td class="mono">demo-darktrace.example</td><td>Nginx · PHP</td><td>demo-cert-x2</td><td>ns2.demo</td><td>Demo Hosting</td><td>2026-01-19</td><td>2026-09-30</td></tr>
+    </table></div>
+    <div class="warn-strip">⚖ Active reconnaissance is permitted only on targets explicitly marked AUTHORIZED TARGET. Never scan arbitrary internet targets.</div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>🖐 TECHNICAL FINGERPRINT</h3><div class="sub">PASSIVE / PUBLIC METADATA — technology ≠ person</div>
+      <div class="bar-row"><span class="bl">Nginx</span><div class="bt"><i style="width:92%"></i></div><span class="bv">92%</span></div>
+      <div class="bar-row"><span class="bl">PHP</span><div class="bt"><i style="width:78%"></i></div><span class="bv">78%</span></div>
+      <div class="bar-row"><span class="bl">OpenSSL</span><div class="bt"><i style="width:86%"></i></div><span class="bv">86%</span></div>
+      <div class="bar-row"><span class="bl">Cloudflare</span><div class="bt"><i style="width:64%"></i></div><span class="bv">64%</span></div>
+      <div class="bar-row"><span class="bl">Linux</span><div class="bt"><i style="width:95%"></i></div><span class="bv">95%</span></div>
+    </div>
+    <div class="card">
+      <h3>🔌 AUTHORIZED PORT SCAN</h3><div class="sub">Target: lab.darktrace.local · AUTHORIZED</div>
+      <div class="tbl-wrap"><table>
+        <tr><th>PORT</th><th>STATE</th><th>SERVICE</th><th>PROTOCOL</th></tr>
+        <tr><td class="mono">22</td><td><span class="st ONLINE">OPEN</span></td><td>SSH</td><td>TCP</td></tr>
+        <tr><td class="mono">53</td><td><span class="st ONLINE">OPEN</span></td><td>DNS</td><td>TCP/UDP</td></tr>
+        <tr><td class="mono">80</td><td><span class="st ONLINE">OPEN</span></td><td>HTTP</td><td>TCP</td></tr>
+        <tr><td class="mono">443</td><td><span class="st ONLINE">OPEN</span></td><td>HTTPS</td><td>TCP</td></tr>
+        <tr><td class="mono">8080</td><td><span class="st ONLINE">OPEN</span></td><td>HTTP-ALT</td><td>TCP</td></tr>
+      </table></div>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn">QUICK SCAN</button><button class="btn">STANDARD SCAN</button><button class="btn ghost">SERVICE DETECTION</button></div>
+      <div class="warn-strip">⚠ Only scan systems for which explicit authorization has been provided.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DOSSIER ================= -->
+<div class="page" id="p-dossier">
+  <div class="card">
+    <h3>📑 INVESTIGATION DOSSIER — CASE DT-2026-0147</h3><div class="sub">Forensic report builder · FICTIONAL DEMO DATA</div>
+    <div class="two-col">
+      <div style="font-size:12px;line-height:2">
+        <b style="color:#7dd3fc">1. EXECUTIVE SUMMARY</b> — Multi-signal analytical correlation of observed alias "DarkFox" with 3 potential linked identities. Composite confidence 84%.<br>
+        <b style="color:#7dd3fc">2. ACTOR PROFILE & ALIASES</b> — DarkFox · d4rk_f0x · FoxShadow · ShadowAdmin<br>
+        <b style="color:#7dd3fc">3. PGP EVIDENCE</b> — Key reuse across 2 aliases (87%)<br>
+        <b style="color:#7dd3fc">4. CRYPTO EVIDENCE</b> — DEMO-WALLET-B, 3 clusters (74%)<br>
+        <b style="color:#7dd3fc">5. STYLOMETRY</b> — Style similarity 82%, AI-assisted indicator: Possible<br>
+        <b style="color:#7dd3fc">6. INFRASTRUCTURE</b> — demo-darktrace.example · 203.0.113.10<br>
+        <b style="color:#7dd3fc">7. GNN PREDICTIONS</b> — 12 predicted links, top pair 86%<br>
+        <b style="color:#7dd3fc">8. LIMITATIONS</b> — Real-world identity NOT established. All findings are analytical correlations requiring analyst verification.<br>
+      </div>
+      <div>
+        <h3 style="font-size:12px;margin-bottom:10px">🔗 EVIDENCE CHAIN</h3>
+        <div class="mono" style="font-size:11px;line-height:2.1">
+          SOURCE → COLLECT → NORMALIZE → HASH → ANALYZE → GRAPH → REVIEW → REPORT<br>
+          <span style="color:var(--dim)">EV-0117 · public post · sha256:9f2a…c41d · 87% · provenance: PUBLIC OSINT ✓</span><br>
+          <span style="color:var(--dim)">EV-0118 · wallet cluster · sha256:3be1…77aa · 74% · provenance: PUBLIC CHAIN ✓</span><br>
+          <span style="color:var(--dim)">EV-0119 · stylometry sample · sha256:d208…9f3c · 76% · provenance: PUBLIC OSINT ✓</span><br>
+          <span style="color:var(--dim)">EV-0120 · GNN candidate link · sha256:71cc…e02b · 86% · provenance: AI MODEL ⚠ review</span>
+        </div>
+        <h3 style="font-size:12px;margin:14px 0 10px">🧑‍⚖ HUMAN ANALYST REVIEW</h3>
+        <div class="bar-row"><span class="bl">DarkFox ↔ d4rk_f0x</span><span class="st WARNING">PENDING</span></div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn" style="font-size:10px;padding:7px 13px" onclick="review('CONFIRMED')">✓ CONFIRM</button>
+          <button class="btn danger" style="font-size:10px;padding:7px 13px" onclick="review('REJECTED')">✗ REJECT</button>
+          <button class="btn ghost" style="font-size:10px;padding:7px 13px" onclick="review('NEEDS EVIDENCE')">＋ NEEDS MORE EVIDENCE</button>
+        </div>
+        <div id="reviewOut" style="margin-top:8px;font-size:11px"></div>
+        <div class="never-strip">⚖ Analysts can reject any AI-generated graph edge. AI never makes the final identity determination.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn primary" onclick="termLine('t-ok','[OK] Dossier exported → darktrace_dossier_DT-2026-0147.pdf (demo)')">⬇ EXPORT PDF</button>
+      <button class="btn">EXPORT JSON</button><button class="btn">EXPORT CSV</button><button class="btn ghost">🖨 PRINT DOSSIER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= HEALTH ================= -->
+<div class="page" id="p-health">
+  <div class="card">
+    <h3>♥ SYSTEM HEALTH</h3><div class="sub">Full-stack service mesh — React/TS frontend · FastAPI · PostgreSQL · Neo4j · Elasticsearch · Kafka · PyTorch/GNN</div>
+    <div class="health-grid" id="healthGrid"></div>
+    <div class="three-col" style="margin-top:16px;font-size:12px;color:var(--dim)">
+      <div>CPU <b class="mono">42%</b> · Memory <b class="mono">61%</b> · Storage <b class="mono">57%</b></div>
+      <div>API latency <b class="mono">38ms</b> · Kafka events <b class="mono">2.1k/s</b> · Queue depth <b class="mono">14</b></div>
+      <div>Graph nodes <b class="mono">1,284</b> · Relationships <b class="mono">3,912</b></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🔐 SECURITY & ACCESS CONTROL</h3><div class="sub">JWT · RBAC · Audit logs · Encrypted storage · TLS · Evidence integrity</div>
+    <div class="tbl-wrap"><table>
+      <tr><th>ROLE</th><th>PERMISSIONS</th><th>ACTIVE SESSIONS</th></tr>
+      <tr><td><span class="st CRITICAL">ADMIN</span></td><td>Full control, user management, system config</td><td>1</td></tr>
+      <tr><td><span class="st HIGH">ANALYST</span></td><td>Investigations, review & confirm/reject AI edges, dossier export</td><td>4</td></tr>
+      <tr><td><span class="st MEDIUM">RESEARCHER</span></td><td>Read-only intelligence, graph exploration</td><td>6</td></tr>
+      <tr><td><span class="st LOW">VIEWER</span></td><td>Dashboard & alerts viewing only</td><td>11</td></tr>
+    </table></div>
+  </div>
+</div>
+
+<!-- ================= DARK WEB CONNECTION SCANNER ================= -->
+<div class="page" id="p-scan">
+  <div class="card">
+    <h3>🧅 DARK WEB CONNECTION SCANNER</h3>
+    <div class="sub">Connectivity & metadata scanning of dark-web services through the Tor proxy — latency, HTTP status, onion protocol version, circuit ID</div>
+    <div class="search-row">
+      <input id="scanInput" placeholder="demo-*.onion target, or batch (comma separated)" value="demo-market-01.onion, demo-forum-02.onion, demo-leak-03.onion, demo-chan-04.onion" style="flex:1;min-width:280px">
+      <button class="btn primary" onclick="runScan()">▶ START SCAN</button>
+      <button class="btn" onclick="clearScan()">CLEAR</button>
+      <button class="btn ghost" onclick="exportScan()">⬇ EXPORT CSV</button>
+    </div>
+    <div class="three-col" style="margin-top:16px;font-size:12px">
+      <div>Targets scanned<br><b style="font-size:22px;color:var(--cyan)" id="scTotal">0</b></div>
+      <div>Reachable<br><b style="font-size:22px;color:var(--green)" id="scOnline">0</b></div>
+      <div>Offline / timeout<br><b style="font-size:22px;color:var(--red)" id="scOffline">0</b></div>
+    </div>
+    <div class="bar-row" style="margin-top:12px"><span class="bl">Scan progress</span><div class="bt"><i id="scanProg" style="width:0%"></i></div><span class="bv" id="scanPct">0%</span></div>
+    <div class="term" id="scanTerm" style="margin-top:14px;height:210px"><div class="t-info">[READY] Scanner idle — Tor proxy 127.0.0.1:9050 (simulated)<span class="cur"></span></div></div>
+    <div class="warn-strip">⚖ Demo-mode guard: only synthetic <span class="mono">demo-*.onion</span> targets are accepted — real dark-web addresses are blocked. Scanning third-party systems without explicit authorization is prohibited. Connectivity metadata ≠ attribution.</div>
+  </div>
+  <div class="card">
+    <h3>📋 SCAN RESULTS</h3><div class="sub">Per-target connectivity evidence — appended live during scan</div>
+    <div class="tbl-wrap"><table>
+      <tr><th>TARGET</th><th>STATUS</th><th>LATENCY</th><th>ONION</th><th>CIRCUIT</th><th>HTTP</th><th>PUBLIC TITLE</th><th>FIRST SEEN</th><th>LAST SEEN</th></tr>
+      <tbody id="scanBody"><tr><td colspan="9" style="color:var(--dim)">No targets scanned yet</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ================= SETTINGS ================= -->
+<div class="page" id="p-settings">
+  <div class="two-col">
+    <div class="card">
+      <h3>👤 PROFILE</h3><div class="sub">Local demo profile — stored in this session only</div>
+      <div class="opt-grid" style="grid-template-columns:1fr 1fr">
+        <input id="setName" placeholder="Display name" value="Analyst Demo">
+        <input id="setEmail" placeholder="Email" value="analyst@darktrace.demo">
+        <input id="setOrg" placeholder="Organization" value="SIH26151 Team">
+        <select id="setRole" style="background:#060d1a;border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px 13px;font-size:12.5px">
+          <option>ADMIN</option><option selected>ANALYST</option><option>RESEARCHER</option><option>VIEWER</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn primary" onclick="saveSettings()">💾 SAVE PROFILE</button>
+        <button class="btn ghost" onclick="toast('Profile photo upload is simulated in demo mode')">UPLOAD AVATAR</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔔 NOTIFICATIONS & PREFERENCES</h3><div class="sub">Toggle to enable — saved on Save</div>
+      <div class="set-row"><div><div>Email alerts</div><div class="d">New critical/high alerts</div></div><div class="tgl on" data-k="email"><i></i></div></div>
+      <div class="set-row"><div><div>Push notifications</div><div class="d">GNN predictions awaiting review</div></div><div class="tgl on" data-k="push"><i></i></div></div>
+      <div class="set-row"><div><div>Weekly digest</div><div class="d">Summary of new indicators</div></div><div class="tgl" data-k="digest"><i></i></div></div>
+      <div class="set-row"><div><div>Compact UI</div><div class="d">Denser tables and cards</div></div><div class="tgl" data-k="compact"><i></i></div></div>
+      <div class="set-row" style="border-bottom:none"><div><div>Animated background</div><div class="d">Grid + binary watermark effects</div></div><div class="tgl on" data-k="anim"><i></i></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🧅 SCANNER DEFAULTS</h3><div class="sub">Used by the Dark Web Connection Scanner</div>
+    <div class="opt-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">THREADS</div><input id="setThreads" type="number" value="4" min="1" max="16"></div>
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">TIMEOUT (S)</div><input id="setTimeout" type="number" value="8" min="1" max="60"></div>
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">RETRIES</div><input id="setRetries" type="number" value="2" min="0" max="5"></div>
+      <div><div style="font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:4px">TOR PROXY</div><input id="setProxy" value="127.0.0.1:9050"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn primary" onclick="saveSettings()">💾 SAVE DEFAULTS</button>
+      <button class="btn ghost" onclick="resetDefaults()">RESET TO DEFAULTS</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🔐 SESSION & SECURITY</h3><div class="sub">JWT · RBAC · audit logged · encrypted storage</div>
+    <div class="tbl-wrap"><table>
+      <tr><th>SESSION</th><th>VALUE</th></tr>
+      <tr><td>Current user</td><td class="mono" id="sessUser">—</td></tr>
+      <tr><td>Role</td><td class="mono" id="sessRole">—</td></tr>
+      <tr><td>Session ID</td><td class="mono" id="sessId">—</td></tr>
+      <tr><td>Started</td><td class="mono" id="sessStart">—</td></tr>
+    </table></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn danger" onclick="logout()">⏻ LOGOUT</button>
+      <button class="btn ghost" onclick="toast('All other sessions revoked (simulated)')">REVOKE OTHER SESSIONS</button>
+      <button class="btn ghost" onclick="toast('Password change is simulated in demo mode')">CHANGE PASSWORD</button>
+    </div>
+  </div>
+</div>
+
+<footer>DARKTRACE v2.0 · SIH26151 · EVIDENCE-CENTRIC AI · DEMO / SYNTHETIC / PUBLIC OSINT / AUTHORIZED ANALYSIS ONLY</footer>
+</main>
+
+<script>
+/* ---------- NAV ---------- */
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  document.getElementById('p-'+p).classList.add('on');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.dataset.p===p));
+  document.getElementById('sidebar').classList.remove('open');
+  if(p==='graph')drawGraph();
+}
+document.querySelectorAll('#nav a').forEach(a=>a.onclick=()=>go(a.dataset.p));
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+if(innerWidth<=760)document.getElementById('burger').style.display='flex';
+
+/* ---------- KPI ---------- */
+const kpis=[
+ ['1,247','Dark Web Sources Monitored','+84 today','--cyan'],
+ ['128','Threat Actors / Profiles','+7 this week','--red'],
+ ['8,432','Public Indicators','+312 this week','--blue'],
+ ['89','PGP Keys Correlated','12 clusters','--purple'],
+ ['342','Crypto Wallets Analyzed','3 chains','--yellow'],
+ ['217','Stylometry Analyses','5 this week','--magenta'],
+ ['563','Infrastructure Relationships','2 new today','--orange'],
+ ['84%','Average Confidence','HIGH band','--green']];
+document.getElementById('kpis').innerHTML=kpis.map(k=>
+ `<div class="kpi" style="--kc:var(${k[3]})"><div class="val">${k[0]}</div><div class="lbl">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join('');
+
+/* ---------- MODULES ---------- */
+const mods=[
+ ['🕶','Hidden Service Intelligence','Public onion metadata and authorized source analysis.','ONLINE','--cyan','CAPABILITY 1'],
+ ['⬡','Actor Identity Graph','PGP + wallet + behavioural + infrastructure relationships.','ONLINE','--purple','CAPABILITY 2'],
+ ['✒','AI Stylometry Engine','Writing-pattern similarity and AI-assisted text indicators.','ONLINE','--magenta','AI'],
+ ['📑','Dossier Export Suite','Forensic reports with 1-click PDF, JSON & CSV export.','ONLINE','--green','EXPORT'],
+ ['🗺','Threat Intelligence Map','Interactive Leaflet-style map with generalized regions.','ONLINE','--blue','LIVE'],
+ ['🕐','Timeline Query Engine','Query actor activity across UTC timezone windows.','ONLINE','--yellow','QUERY'],
+ ['🧠','Behavioural Profiler','Posting cadence, timing patterns & persona scoring.','ONLINE','--magenta','BEHAVIOURAL'],
+ ['₿','Blockchain & OSINT Tracer','Public blockchain relationship analysis across BTC/ETH.','ONLINE','--yellow','LIVE APIS'],
+ ['⌖','Authorized Recon Engine','Passive recon — active only on authorized targets.','ONLINE','--cyan','AUTONOMOUS'],
+ ['🔗','Evidence Chain Builder','Hash-chained provenance & court-ready evidence tree.','REVIEW','--green','FORENSIC'],
+ ['🖐','Technical Fingerprint','Passive technology & infrastructure stack detection.','ONLINE','--blue','PASSIVE'],
+ ['🔌','Port Intelligence','Authorized port & service enumeration only.','ONLINE','--orange','AUTHORIZED'],
+ ['🏗','Infrastructure Analyzer','Domains, certs, DNS & hosting relationship mapping.','ONLINE','--orange','PASSIVE'],
+ ['🧬','GNN Link Prediction','Graph neural network candidate relationship analysis.','REVIEW','--purple','AI'],
+ ['⚭','Identity-Linkage Engine','Multi-signal analytical correlation with confidence.','REVIEW','--purple','ATTRIBUTION'],
+ ['🧑‍⚖','Analyst Review Center','Human confirmation / rejection of every AI edge.','REVIEW','--red','HUMAN-IN-LOOP']];
+document.getElementById('mods').innerHTML=mods.map(m=>
+ `<div class="mod"><div class="m-ic">${m[0]}</div><span class="m-tag" style="--mc:var(${m[4]})">${m[5]}</span><h4>${m[1]}</h4><p>${m[2]}</p>
+  <div style="margin-top:8px"><span class="st ${m[3]==='ONLINE'?'ONLINE':'WARNING'}" style="font-size:8px">${m[3]}</span></div>
+  <a onclick="go('${['scan','graph','investigate','dossier','dashboard','timeline','investigate','investigate','recon','dossier','recon','recon','recon','graph','identity','dossier'][mods.indexOf(m)]||'investigate'}')">Launch Module →</a></div>`).join('');
+
+/* ---------- SIGNALS ---------- */
+const sigs=[
+ ['CRYPTOGRAPHIC','87%','--cyan',['PGP key reuse','Signature relationships','Key clustering']],
+ ['FINANCIAL','74%','--yellow',['Wallets','Transactions','Cluster indicators']],
+ ['BEHAVIOURAL','81%','--magenta',['Stylometry','Posting patterns','Timing analysis']],
+ ['INFRASTRUCTURAL','69%','--orange',['Domains','IPs','Certificates','Technology']]];
+const sigHTML=sigs.map(s=>`<div class="sig" style="--sc:var(${s[2]})"><div style="font-size:10px;letter-spacing:2px;color:var(--dim)">${s[0]}</div><div class="sv">${s[1]}</div><ul>${s[3].map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('');
+document.getElementById('sigCards').innerHTML=sigHTML;
+document.getElementById('dashSignals').innerHTML=sigs.map(s=>`<div class="bar-row"><span class="bl">${s[0]}</span><div class="bt"><i style="width:${s[1]}"></i></div><span class="bv">${s[1]}</span></div>`).join('');
+
+/* ---------- PIPELINE ---------- */
+const stages=['ACTOR INPUT','TOR CONNECTION','PUBLIC OSINT COLLECTION','NORMALIZATION','PGP ANALYSIS','CRYPTO INTELLIGENCE','STYLOMETRY','INFRASTRUCTURE ANALYSIS','TECHNICAL FINGERPRINTING','NEO4J GRAPH','GNN LINK PREDICTION','MULTI-SIGNAL CORRELATION','CONFIDENCE SCORE','IDENTITY-LINKAGE ASSESSMENT','ANALYST REVIEW','EVIDENCE REPORT'];
+const icons=['◎','🧅','🛰','⚙','🔑','₿','✒','🏗','🖐','⬡','🧬','⚭','◎','⚭','🧑‍⚖','📑'];
+document.getElementById('pipe').innerHTML=stages.map((s,i)=>
+ `<div class="pipe-stage" id="ps${i}"><div class="ps-ic">${icons[i]}</div><div class="ps-name">${s}</div><div class="ps-bar"><i></i></div><div class="ps-meta">— records: 0 · 0.0s · evidence: 0 · conf: —</div></div>`).join('');
+
+const metas=['1 input','3 hops (sim)','1,247 src · 18.6k rec','18,642 rec','2 keys · 87%','1 wallet · 3 clusters','4 samples · 82%','3 entities · 69%','5 tech · 92%','1,284 nodes · 3,912 edges','47 candidates · 12 predicted','4 signals fused','composite 84%','2 linked ids','PENDING review','58 evidence items'];
+function runAnalysis(){
+  clearAnalysis(true);
+  go('investigate');
+  const name=document.getElementById('actorInput').value||'DarkFox';
+  tlines=[['t-info',`[INIT] Case created → DT-2026-0147`],['t-info',`[OK] Actor input received: ${name}`],['t-ok','[OK] Public OSINT collection started'],['t-ok','[OK] Indicators normalized (18,642 records)'],['t-ok','[OK] PGP analysis completed — key reuse detected'],['t-ok','[OK] Crypto analysis completed — 3 clusters'],['t-ok','[OK] Stylometry completed — similarity 82%'],['t-ok','[OK] Infrastructure analysis completed'],['t-ok','[OK] Technical fingerprint completed'],['t-ok','[OK] Relationship graph created (Neo4j)'],['t-ai','[AI] GNN link prediction running…'],['t-ai','[AI] Multi-signal correlation completed — 84%'],['t-ai','[AI] Confidence score calculated — HIGH band'],['t-warn','[WAIT] Analyst review required — identity NOT established']];
+  stages.forEach((s,i)=>{
+    setTimeout(()=>{
+      const el=document.getElementById('ps'+i);
+      el.classList.add('active');
+      el.querySelector('.ps-bar i').style.width='55%';
+      el.querySelector('.ps-meta').textContent=`RUNNING · ${metas[i]}`;
+      termLine(Object.values(tlines[i])[0]?'':''); // noop guard
+      addTerm(tlines[i][0],tlines[i][1]);
+    },i*650);
+    setTimeout(()=>{
+      const el=document.getElementById('ps'+i);
+      el.classList.remove('active');el.classList.add('done');
+      el.querySelector('.ps-bar i').style.width='100%';
+      const t=(0.4+Math.random()*1.8).toFixed(1);
+      el.querySelector('.ps-meta').textContent=`DONE · ${metas[i]} · ${t}s`;
+      if(i===stages.length-1)document.getElementById('identCard').style.display='block';
+    },i*650+600);
+  });
+}
+function loadDemo(){document.getElementById('actorInput').value='DarkFox';runAnalysis();}
+function clearAnalysis(silent){
+  document.querySelectorAll('.pipe-stage').forEach(e=>{e.classList.remove('active','done');e.querySelector('.ps-bar i').style.width='0%';e.querySelector('.ps-meta').textContent='— records: 0 · 0.0s · evidence: 0 · conf: —';});
+  if(!silent)document.getElementById('identCard').style.display='none';
+}
+function addTerm(cls,txt){
+  const t=document.getElementById('term');
+  t.querySelector('.cur')?.remove();
+  const d=document.createElement('div');d.className=cls;d.textContent=txt;
+  const c=document.createElement('span');c.className='cur';
+  d.appendChild(c);t.appendChild(d);t.scrollTop=t.scrollHeight;
+}
+function termLine(cls,txt){addTerm(cls,txt);}
+function review(r){document.getElementById('reviewOut').innerHTML=`<span class="st ${r==='REJECTED'?'OFFLINE':r==='CONFIRMED'?'ONLINE':'WARNING'}">EDGE ${r} BY ANALYST-AD</span> <span style="color:var(--dim)">· audit logged · AI edge overridable ✓</span>`;}
+function torToggle(on){const s=document.getElementById('torSt');s.textContent=on?'CONNECTED':'DISCONNECTED';s.className='st '+(on?'ONLINE':'OFFLINE');termLine(on?'t-ok':'t-warn',on?'[OK] Tor circuit established (simulated)':'[WARN] Tor disconnected — OSINT fallback to public web');}
+
+/* ---------- ONION ANALYZER ---------- */
+function analyzeOnion(){
+  const v=document.getElementById('onionIn').value;
+  document.getElementById('onionOut').innerHTML=`
+   <span class="pill demo">SYNTHETIC DEMONSTRATION</span>
+   <div class="bar-row"><span class="bl">Service Status</span><span class="st ONLINE">OBSERVED (SIM)</span></div>
+   <div class="bar-row"><span class="bl">Public Title</span><span class="mono">"Demo Source Portal"</span></div>
+   <div class="bar-row"><span class="bl">Observed Timestamp</span><span class="mono">${new Date().toISOString()}</span></div>
+   <div class="bar-row"><span class="bl">Technology Indicators</span><span class="mono">Nginx · PHP · OpenSSL</span></div>
+   <div class="bar-row"><span class="bl">Public PGP References</span><span class="mono">1 found</span></div>
+   <div class="bar-row"><span class="bl">Public Wallet References</span><span class="mono">1 found</span></div>
+   <div class="bar-row"><span class="bl">Historical Observations</span><span class="mono">14 snapshots</span></div>`;
+}
+
+/* ---------- OSINT RUN ---------- */
+function runOsint(){
+  const t=document.getElementById('term2');t.innerHTML='';
+  ['[INFO] Investigation started','[INFO] Actor: DarkFox','[INFO] Collecting public indicators','[OK] Username references discovered: 12','[OK] PGP references discovered: 2','[OK] Blockchain indicators discovered: 5','[OK] Infrastructure references discovered: 7','[OK] Collection completed — 342 new indicators'].forEach((l,i)=>setTimeout(()=>{const d=document.createElement('div');d.className=l.startsWith('[OK')?'t-ok':'t-info';d.textContent=l;t.appendChild(d);t.scrollTop=t.scrollHeight;},i*550));
+}
+
+/* ---------- TRAFFIC CHART ---------- */
+(function(){
+  const cv=document.getElementById('trafficCv'),cx=cv.getContext('2d');let t=0;
+  setInterval(()=>{
+    if(!document.getElementById('p-osint').classList.contains('on'))return;
+    cx.fillStyle='#050b16';cx.fillRect(0,0,900,180);
+    ['#22d3ee','#a78bfa','#fbbf24'].forEach((col,k)=>{
+      cx.beginPath();cx.strokeStyle=col;cx.lineWidth=1.6;
+      for(let x=0;x<=900;x+=8){
+        const y=90+k*18+Math.sin(x/60+t+k*2)*22*Math.sin(x/140+t*.5+k);
+        x===0?cx.moveTo(x,y):cx.lineTo(x,y);
+      }cx.stroke();});
+    t+=0.05;
+  },50);
+})();
+
+/* ---------- ALERTS ---------- */
+const alerts=[
+ ['CRITICAL','red','🧬','New GNN Candidate Link','DarkFox ↔ d4rk_f0x predicted at 86% — review required','2026-10-04 09:41','GNN Engine','86%','OPEN'],
+ ['HIGH','orange','🔑','PGP Key Reuse','PGP-KEY-X observed across 2 aliases','2026-10-04 08:17','PGP Engine','87%','OPEN'],
+ ['HIGH','orange','₿','Wallet Relationship','DEMO-WALLET-B cluster overlap detected','2026-10-04 07:52','Crypto Engine','74%','REVIEW'],
+ ['MEDIUM','yellow','✒','Stylometric Similarity','Style match 82% across 4 samples','2026-10-03 22:03','Stylometry Engine','76%','REVIEW'],
+ ['MEDIUM','yellow','🏗','Infrastructure Change','New certificate observed on demo-darktrace.example','2026-10-03 18:44','Infra Engine','69%','OPEN'],
+ ['LOW','green','🛰','New Public Source','demo-source-02.onion added to monitoring (synthetic)','2026-10-03 11:20','OSINT Engine','61%','CLOSED'],
+ ['LOW','green','⚠','Evidence Conflict','Timing discrepancy on 1 sample — deprioritized','2026-10-02 15:36','Correlation','54%','CLOSED']];
+function alertHTML(a){return `<div class="alert-item"><div class="a-ic">${a[2]}</div><div style="flex:1"><div class="a-title">${a[3]}</div><div class="a-meta">${a[4]}</div><div class="a-meta">⏱ ${a[5]} · src: ${a[6]} · conf: ${a[7]} · status: ${a[8]}</div></div><span class="sev ${a[0]}">${a[0]}</span></div>`;}
+function refreshAlerts(){document.getElementById('alertList').innerHTML=alerts.map(alertHTML).join('');}
+refreshAlerts();
+document.getElementById('dashAlerts').innerHTML=alerts.slice(0,4).map(alertHTML).join('');
+
+/* ---------- TIMELINE ---------- */
+const tl=[['2024','pgp','#22d3ee','Alias "DarkFox" first observed on public forum (synthetic)'],['2025','crypto','#fbbf24','PGP key PGP-KEY-X observed'],['2025','crypto','#fbbf24','Wallet relationship observed — DEMO-WALLET-B'],['2026','infra','#fb923c','Domain observed — demo-darktrace.example'],['2026','pgp','#e879f9','Stylometric similarity detected (82%)'],['2026','ai','#a78bfa','GNN candidate link generated (86%)'],['2026','analyst','#34d399','Analyst review — PENDING']];
+function renderTl(f){document.getElementById('tl').innerHTML=tl.filter(e=>f==='all'||e[1]===f).map(e=>`<div class="tl-item" style="--tc:${e[2]}"><div class="yr">${e[0]}</div><div class="ev">${e[3]}</div></div>`).join('');}
+function filterTl(btn,f){renderTl(f);}
+renderTl('all');
+
+/* ---------- HEALTH ---------- */
+const svcs=['TOR Collector','OSINT Engine','Recon Engine','PGP Engine','Crypto Engine','Stylometry Engine','Infrastructure Engine','Neo4j','PostgreSQL','Elasticsearch','Kafka','FastAPI','GNN Engine','Evidence Engine'];
+document.getElementById('healthGrid').innerHTML=svcs.map((s,i)=>`<div class="h-svc"><span class="nm">${s}</span><span class="st ${i===9?'WARNING':'ONLINE'}">${i===9?'WARNING':'ONLINE'}</span></div>`).join('');
+
+/* ---------- GRAPH (SVG force-lite) ---------- */
+const N=[
+ {id:'DarkFox',t:'Actor',c:'#22d3ee',r:20,x:450,y:200},
+ {id:'d4rk_f0x',t:'Alias',c:'#22d3ee',r:13,x:300,y:110},
+ {id:'FoxShadow',t:'Alias',c:'#22d3ee',r:13,x:610,y:120},
+ {id:'PGP-KEY-X',t:'PGP Key',c:'#a78bfa',r:14,x:250,y:260},
+ {id:'DEMO-WALLET-B',t:'Wallet',c:'#fbbf24',r:15,x:640,y:280},
+ {id:'TX-4F2A',t:'Transaction',c:'#fbbf24',r:9,x:760,y:210},
+ {id:'demo-darktrace.example',t:'Domain',c:'#fb923c',r:14,x:430,y:360},
+ {id:'203.0.113.10',t:'IP',c:'#fb923c',r:12,x:300,y:430},
+ {id:'Demo Forum A',t:'Forum',c:'#e879f9',r:13,x:560,y:440},
+ {id:'Post #1284',t:'Post',c:'#e879f9',r:10,x:680,y:390},
+ {id:'Nginx/PHP',t:'Technology',c:'#60a5fa',r:11,x:180,y:340},
+ {id:'EV-0117',t:'Evidence',c:'#34d399',r:10,x:520,y:60}];
+const E=[[0,1,'ASSOCIATED_WITH',88],[0,2,'ASSOCIATED_WITH',84],[0,3,'USES',87],[0,4,'REFERENCES',74],[4,5,'TRANSACTED_WITH',70],[0,6,'OBSERVED_ON',69],[6,7,'RESOLVES_TO',82],[0,8,'POSTED',91],[8,9,'OBSERVED_ON',88],[7,10,'USES_TECHNOLOGY',78],[0,11,'SUPPORTED_BY',95],[1,3,'REFERENCES',87],[2,4,'TEMPORALLY_CORRELATED',66]];
+const relTypes=[...new Set(E.map(e=>e[2]))];
+let activeRels=new Set(relTypes);
+document.getElementById('gTools').innerHTML=relTypes.map(r=>`<span class="chip on" data-r="${r}">${r}</span>`).join('');
+document.querySelectorAll('.gTools,.g-tools').forEach(()=>{});
+document.getElementById('gTools').addEventListener('click',e=>{
+  if(e.target.classList.contains('chip')){
+    const r=e.target.dataset.r;
+    activeRels.has(r)?activeRels.delete(r):activeRels.add(r);
+    e.target.classList.toggle('on');drawGraph();
+  }});
+let gview=null;
+function drawGraph(){
+  const svg=document.getElementById('graphSvg');if(!svg.clientWidth)return;
+  const W=svg.clientWidth,H=520;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  if(!gview)gview={x:W/2-450,y:H/2-250,s:1};
+  const z=gview;
+  let h='';
+  E.forEach(e=>{
+    if(!activeRels.has(e[2]))return;
+    const a=N[e[0]],b=N[e[1]];
+    h+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${a.c}" stroke-opacity=".35" stroke-width="1.2"/>
+        <text x="${(a.x+b.x)/2}" y="${(a.y+b.y)/2-4}" class="g-label" fill-opacity=".55" font-size="7">${e[2]} · ${e[3]}%</text>`;
+  });
+  N.forEach((n,i)=>{
+    h+=`<g class="node-g" data-i="${i}" transform="translate(${n.x},${n.y})">
+      <circle r="${n.r+5}" fill="${n.c}" fill-opacity=".12"><animate attributeName="r" values="${n.r+3};${n.r+8};${n.r+3}" dur="3s" repeatCount="indefinite"/></circle>
+      <circle r="${n.r}" fill="#0b1626" stroke="${n.c}" stroke-width="1.8"/>
+      <text class="g-label" y="${n.r+14}">${n.id.length>18?n.id.slice(0,17)+'…':n.id}</text></g>`;
+  });
+  svg.innerHTML=`<g transform="translate(${z.x},${z.y}) scale(${z.s})">${h}</g>`;
+  svg.querySelectorAll('.node-g').forEach(g=>g.onclick=()=>showNode(+g.dataset.i));
+}
+function showNode(i){
+  const n=N[i];
+  document.getElementById('nodePanel').style.display='block';
+  document.getElementById('nodePanel').innerHTML=`<h4>${n.id}</h4>
+   <div class="row"><span>TYPE</span><b>${n.t}</b></div>
+   <div class="row"><span>SOURCE</span><b>PUBLIC OSINT</b></div>
+   <div class="row"><span>FIRST SEEN</span><b>2024-0${1+i%9}-1${i%9}</b></div>
+   <div class="row"><span>LAST SEEN</span><b>2026-10-04</b></div>
+   <div class="row"><span>CONFIDENCE</span><b style="color:var(--cyan)">${65+(i*7)%30}%</b></div>
+   <div class="row"><span>EVIDENCE</span><b>EV-01${10+i}</b></div>
+   <div style="margin-top:8px"><span class="pill demo">SYNTHETIC</span></div>`;
+}
+(function(){
+  const svg=document.getElementById('graphSvg');let drag=null;
+  svg.addEventListener('mousedown',e=>drag={x:e.clientX,y:e.clientY});
+  addEventListener('mousemove',e=>{if(drag&&gview){gview.x+=e.clientX-drag.x;gview.y+=e.clientY-drag.y;drag={x:e.clientX,y:e.clientY};drawGraph();}});
+  addEventListener('mouseup',()=>drag=null);
+  svg.addEventListener('wheel',e=>{e.preventDefault();if(!gview)return;const f=e.deltaY<0?1.1:0.9;gview.s=Math.min(2.5,Math.max(.4,gview.s*f));drawGraph();},{passive:false});
+  addEventListener('resize',()=>{if(document.getElementById('p-graph').classList.contains('on'))drawGraph();});
+})();
+/* ---------- LOGIN / SESSION ---------- */
+const ACCOUNTS={admin:{pass:'darktrace123',role:'ADMIN',name:'Admin'},analyst:{pass:'trace2026',role:'ANALYST',name:'Analyst'}};
+let session=null;
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginErr');
+  if(!u||!p){err.textContent='⚠ Username and password are required';return;}
+  const acc=ACCOUNTS[u.toLowerCase()];
+  if(acc&&acc.pass!==p){err.textContent='⚠ Invalid credentials — attempt logged';return;}
+  err.textContent='';
+  startSession(u,acc?acc.role:'VIEWER',acc?acc.name:u);
+}
+function guestLogin(){startSession('guest','VIEWER','Guest');}
+function startSession(u,role,name){
+  session={user:u,role,name,start:new Date()};
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('avatar').textContent=(name||'A').slice(0,2).toUpperCase();
+  document.getElementById('sessUser').textContent=u;
+  document.getElementById('sessRole').textContent=role;
+  document.getElementById('sessId').textContent='SES-'+Math.random().toString(16).slice(2,10).toUpperCase();
+  document.getElementById('sessStart').textContent=session.start.toISOString();
+  addTerm('t-info',`[AUTH] Session started → ${u} (${role}) · audit logged`);
+  toast(`Welcome, ${name} — ${role} session started`);
+}
+function logout(){
+  if(session)addTerm('t-warn',`[AUTH] Session ended → ${session.user} · audit logged`);
+  session=null;
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginErr').textContent='';
+}
+
+/* ---------- TOAST / SETTINGS ---------- */
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400);
+}
+document.querySelectorAll('.tgl').forEach(t=>t.onclick=()=>{t.classList.toggle('on');});
+function saveSettings(){
+  const n=document.getElementById('setName').value.trim();
+  if(n)document.getElementById('avatar').textContent=n.slice(0,2).toUpperCase();
+  toast('Settings saved (session demo)');
+}
+function resetDefaults(){
+  document.getElementById('setThreads').value=4;
+  document.getElementById('setTimeout').value=8;
+  document.getElementById('setRetries').value=2;
+  document.getElementById('setProxy').value='127.0.0.1:9050';
+  toast('Scanner defaults restored');
+}
+
+/* ---------- DARK WEB CONNECTION SCANNER ---------- */
+let scanResults=[];
+function scanLog(cls,txt){
+  const t=document.getElementById('scanTerm');
+  t.querySelector('.cur')?.remove();
+  const d=document.createElement('div');d.className=cls;d.textContent=txt;
+  const c=document.createElement('span');c.className='cur';d.appendChild(c);
+  t.appendChild(d);t.scrollTop=t.scrollHeight;
+}
+function runScan(){
+  const raw=document.getElementById('scanInput').value.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);
+  const t=document.getElementById('scanTerm');t.innerHTML='';
+  scanResults=[];
+  document.getElementById('scanBody').innerHTML='';
+  document.getElementById('scanProg').style.width='0%';
+  document.getElementById('scanPct').textContent='0%';
+  const targets=[];
+  raw.forEach(h=>{
+    if(!/\.onion$/i.test(h)){scanLog('t-warn',`[BLOCKED] ${h} — not an .onion address (demo guard)`);return;}
+    if(!/^demo-/i.test(h)){scanLog('t-warn',`[BLOCKED] ${h} — real dark-web targets are blocked in demo mode`);return;}
+    if(targets.includes(h))return;
+    targets.push(h);
+  });
+  if(!targets.length){scanLog('t-warn','[ABORT] No permitted targets — use synthetic demo-*.onion addresses');updateScanStats();return;}
+  const threads=Math.max(1,Math.min(16,+document.getElementById('setThreads').value||4));
+  const timeout=Math.max(1,+document.getElementById('setTimeout').value||8);
+  const proxy=document.getElementById('setProxy').value||'127.0.0.1:9050';
+  scanLog('t-info',`[INFO] Dark-web connection scan started → ${targets.length} target(s) · ${threads} thread(s) · timeout ${timeout}s · proxy ${proxy} (simulated)`);
+  let done=0;
+  targets.forEach((h,i)=>{
+    setTimeout(()=>{
+      const latency=150+Math.floor(Math.random()*timeout*100);
+      const online=Math.random()>0.28;
+      const circuit='CB'+Math.random().toString(16).slice(2,8).toUpperCase();
+      const http=online?(Math.random()>0.25?'200':'301'):'—';
+      const title=online?'"'+h.replace(/^demo-/i,'').replace(/\.onion$/i,'').replace(/-/g,' ').toUpperCase().trim()+' Portal"':'—';
+      const first='2024-0'+(1+i%9)+'-1'+(i%9);
+      const last=online?'2026-10-04':'2026-08-1'+(i%9);
+      const r={h,online,latency,ver:'v3',circuit,http,title,first,last};
+      scanResults.push(r);
+      scanLog(online?'t-ok':'t-warn',online?`[ONLINE] ${h} — ${latency}ms · HTTP ${http} · circuit ${circuit}`:`[TIMEOUT] ${h} — no response after ${timeout}s · circuit ${circuit}`);
+      const b=document.getElementById('scanBody');
+      if(done===0)b.innerHTML='';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="mono">${r.h}</td><td><span class="st ${online?'ONLINE':'OFFLINE'}">${online?'ONLINE':'TIMEOUT'}</span></td><td class="mono">${online?r.latency+'ms':'—'}</td><td class="mono">${r.ver}</td><td class="mono">${r.circuit}</td><td class="mono">${r.http}</td><td class="mono">${r.title}</td><td class="mono">${r.first}</td><td class="mono">${r.last}</td>`;
+      b.appendChild(tr);
+      done++;
+      const pct=Math.round(done/targets.length*100);
+      document.getElementById('scanProg').style.width=pct+'%';
+      document.getElementById('scanPct').textContent=pct+'%';
+      updateScanStats();
+      if(done===targets.length)scanLog('t-ai','[AI] Scan complete — connectivity evidence appended to evidence chain (EV-0'+(120+scanResults.length)+' …) · analyst review recommended');
+    },500+i*750);
+  });
+}
+function updateScanStats(){
+  document.getElementById('scTotal').textContent=scanResults.length;
+  document.getElementById('scOnline').textContent=scanResults.filter(r=>r.online).length;
+  document.getElementById('scOffline').textContent=scanResults.filter(r=>!r.online).length;
+}
+function clearScan(){
+  scanResults=[];
+  document.getElementById('scanBody').innerHTML='<tr><td colspan="9" style="color:var(--dim)">No targets scanned yet</td></tr>';
+  document.getElementById('scanTerm').innerHTML='<div class="t-info">[READY] Scanner idle — Tor proxy 127.0.0.1:9050 (simulated)<span class="cur"></span></div>';
+  document.getElementById('scanProg').style.width='0%';
+  document.getElementById('scanPct').textContent='0%';
+  updateScanStats();
+}
+function exportScan(){
+  if(!scanResults.length){toast('No scan results to export');return;}
+  let csv='target,status,latency_ms,onion_version,circuit,http,title,first_seen,last_seen\n';
+  scanResults.forEach(r=>{csv+=[r.h,r.online?'ONLINE':'TIMEOUT',r.online?r.latency:'',r.ver,r.circuit,r.http,'"'+(r.title||'')+'"',r.first,r.last].join(',')+'\n';});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='darktrace_connection_scan.csv';a.click();
+  toast('Scan results exported → CSV');
+}
+</script>
+</body>
+</html>
