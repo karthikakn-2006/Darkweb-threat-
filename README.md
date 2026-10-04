@@ -61,9 +61,9 @@ DARKTRACE combines multiple independent signals into a unified relationship grap
                      ↓
               Evidence Dossier
 
-# DARKTRACE
+DARKTRACE
 
-## AI-Powered Dark Web Threat Actor Intelligence & De-anonymization
+AI-Powered Dark Web Threat Actor Intelligence & De-anonymization
 
 ![DARKTRACE](https://img.shields.io/badge/DARKTRACE-SIH%202026-00e5ff)
 ![Cybersecurity](https://img.shields.io/badge/Theme-Blockchain%20%26%20Cybersecurity-blue)
@@ -74,13 +74,13 @@ DARKTRACE combines multiple independent signals into a unified relationship grap
 
 ---
 
-## 📌 Overview
+ 📌 Overview
 
 **DARKTRACE** is an AI-assisted cybersecurity intelligence platform designed to correlate publicly observable and authorized intelligence signals to identify potential relationships between pseudonymous threat-actor profiles.
 
 The platform combines multiple intelligence signals instead of relying on a single indicator.
 
-### Core Intelligence Signals
+ Core Intelligence Signals
 
 - 🔐 Cryptographic / PGP Intelligence
 - ₿ Cryptocurrency Intelligence
@@ -97,7 +97,7 @@ The platform combines multiple intelligence signals instead of relying on a sing
 
 ---
 
-## 🎯 Problem Statement
+🎯 Problem Statement
 
 Threat actors can use:
 
@@ -118,7 +118,7 @@ DARKTRACE proposes a **multi-signal graph-fusion approach** that combines these 
 
 ---
 
-## 💡 Proposed Solution
+💡 Proposed Solution
 
 DARKTRACE follows this investigation pipeline:
 
